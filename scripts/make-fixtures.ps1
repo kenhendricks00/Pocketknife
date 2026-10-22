@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Regenerates the small test fixtures in tests/Toolbox.Tests/Fixtures.
+Regenerates the small test fixtures in tests/Pocketknife.Tests/Fixtures.
 Needs ffmpeg on PATH (or pass -FFmpeg). Everything is synthetic: test patterns, a sine tone,
 Windows text-to-speech and a hand-written PDF.
 #>
@@ -9,7 +9,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$out = Join-Path $PSScriptRoot "..\tests\Toolbox.Tests\Fixtures"
+$out = Join-Path $PSScriptRoot "..\tests\Pocketknife.Tests\Fixtures"
 New-Item -ItemType Directory -Force $out | Out-Null
 
 # Video: 2 s test pattern with a tone, encoded at high quality so compression has something to remove.
@@ -20,7 +20,7 @@ New-Item -ItemType Directory -Force $out | Out-Null
 
 # Speech: Windows text-to-speech, stored as small mono MP3.
 Add-Type -AssemblyName System.Speech
-$wav = Join-Path ([IO.Path]::GetTempPath()) "toolbox-speech.wav"
+$wav = Join-Path ([IO.Path]::GetTempPath()) "pocketknife-speech.wav"
 $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
 $synth.Rate = -1
 $synth.SetOutputToWaveFile($wav)

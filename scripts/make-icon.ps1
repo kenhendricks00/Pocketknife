@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Renders the app icon (the design in assets/icon.svg) to src/Toolbox.App/Assets/app.ico and assets/logo.png.
+Renders the app icon (the design in assets/icon.svg) to src/Pocketknife.App/Assets/app.ico and assets/logo.png.
 #>
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Drawing
@@ -22,7 +22,7 @@ function New-IconPng([int]$size) {
     $format = New-Object System.Drawing.StringFormat
     $format.Alignment = "Center"
     $format.LineAlignment = "Center"
-    $g.DrawString("WT", $font, [System.Drawing.Brushes]::White, (New-Object System.Drawing.RectangleF 0, ($size * 0.02), $size, $size), $format)
+    $g.DrawString("PK", $font, [System.Drawing.Brushes]::White, (New-Object System.Drawing.RectangleF 0, ($size * 0.02), $size, $size), $format)
     $g.Dispose()
     $stream = New-Object System.IO.MemoryStream
     $bitmap.Save($stream, [System.Drawing.Imaging.ImageFormat]::Png)
@@ -48,7 +48,7 @@ for ($i = 0; $i -lt $sizes.Count; $i++) {
 foreach ($image in $images) { $writer.Write($image) }
 $writer.Flush()
 
-$assets = Join-Path $root "src\Toolbox.App\Assets"
+$assets = Join-Path $root "src\Pocketknife.App\Assets"
 New-Item -ItemType Directory -Force $assets | Out-Null
 [IO.File]::WriteAllBytes((Join-Path $assets "app.ico"), $ico.ToArray())
 [IO.File]::WriteAllBytes((Join-Path $root "assets\logo.png"), $images[-1])

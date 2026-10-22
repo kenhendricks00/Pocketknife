@@ -1,6 +1,6 @@
 # Third-party notices
 
-Windows Toolbox is MIT licensed (see `LICENSE`). It is built on the open source work below.
+Pocketknife is MIT licensed (see `LICENSE`). It is built on the open source work below.
 
 ## Bundled with the app
 
@@ -20,7 +20,7 @@ PDF pages are rendered with `Windows.Data.Pdf`, which is part of Windows and is 
 ## Downloaded on first use
 
 The app does not include these. When a tool first needs one, the app downloads it from the pinned URL below,
-checks its SHA-256 and stores it in `%LOCALAPPDATA%\WindowsToolbox\engines`. You can point the app at your own
+checks its SHA-256 and stores it in `%LOCALAPPDATA%\Pocketknife\engines`. You can point the app at your own
 copy in Settings instead. FFmpeg and yt-dlp run as separate programs, so their licenses don't apply to the app's
 own code.
 

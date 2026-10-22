@@ -1,16 +1,16 @@
 # Working in this repository
 
 ## Commands
-- Build: `dotnet build WindowsToolbox.slnx` (warnings are errors).
-- Test: `dotnet test --project tests/Toolbox.Tests`. The first run downloads the real engines into `%LOCALAPPDATA%\WindowsToolbox-tests\engines`. Set `TOOLBOX_TEST_ENGINES` to use another folder.
-- Format: `dotnet format WindowsToolbox.slnx --verify-no-changes`.
+- Build: `dotnet build Pocketknife.slnx` (warnings are errors).
+- Test: `dotnet test --project tests/Pocketknife.Tests`. The first run downloads the real engines into `%LOCALAPPDATA%\Pocketknife-tests\engines`. Set `POCKETKNIFE_TEST_ENGINES` to use another folder.
+- Format: `dotnet format Pocketknife.slnx --verify-no-changes`.
 - Package: `./scripts/package.ps1` writes the portable zip, installer and checksums to `release/`.
 - UI check: `./scripts/ui-smoke.ps1` drives the published app with UI Automation and saves screenshots.
 
 ## Layout
-- `src/Toolbox.Core`: tools, the runner, engines, PDF/image/media helpers. No UI code beyond WPF imaging.
-- `src/Toolbox.App`: the WPF app. Tool screens are generated from each tool's option schema.
-- `tests/Toolbox.Tests`: behavior tests. Tool tests run the real engines on the small fixtures in `Fixtures/`. `scripts/make-fixtures.ps1` regenerates them.
+- `src/Pocketknife.Core`: tools, the runner, engines, PDF/image/media helpers. No UI code beyond WPF imaging.
+- `src/Pocketknife.App`: the WPF app. Tool screens are generated from each tool's option schema.
+- `tests/Pocketknife.Tests`: behavior tests. Tool tests run the real engines on the small fixtures in `Fixtures/`. `scripts/make-fixtures.ps1` regenerates them.
 - `docs/decisions`: why things are the way they are. Read these before changing the stack, engines or licensing.
 
 ## Rules

@@ -12,12 +12,12 @@ $root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $version = ([xml](Get-Content (Join-Path $root "Directory.Build.props"))).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
 $publish = Join-Path $root "artifacts\publish"
 $release = Join-Path $root "release"
-$name = "WindowsToolbox-$version-win-x64"
+$name = "Pocketknife-$version-win-x64"
 
 Remove-Item $publish, $release -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force $release | Out-Null
 
-dotnet publish (Join-Path $root "src\Toolbox.App") -c Release -r win-x64 --self-contained `
+dotnet publish (Join-Path $root "src\Pocketknife.App") -c Release -r win-x64 --self-contained `
     -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=false -p:EnableCompressionInSingleFile=true `
     -p:DebugType=none -o $publish
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
@@ -32,7 +32,7 @@ if (-not $SkipInstaller) {
         "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
     ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
     if (-not $iscc) { throw "Inno Setup 6 (ISCC.exe) not found. Install it or pass -SkipInstaller." }
-    & $iscc /Q "/DAppVersion=$version" "/DSourceDir=$publish" "/DOutputDir=$release" (Join-Path $root "installer\WindowsToolbox.iss")
+    & $iscc /Q "/DAppVersion=$version" "/DSourceDir=$publish" "/DOutputDir=$release" (Join-Path $root "installer\Pocketknife.iss")
     if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
 }
 

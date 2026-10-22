@@ -4,9 +4,10 @@ Drives the real app through UI Automation: opens every tool, runs it on the test
 saves a screenshot of each screen. Also presses the global launcher hotkey and checks the launcher appears.
 
 .PARAMETER Exe
-Path to WindowsToolbox.exe.
+Path to Pocketknife.exe.
 .PARAMETER Work
-Scratch folder. The app runs with its data and output folders inside it, so your own settings are untouched.
+Scratch folder, new or made by an earlier run of this script. Sample inputs go in Samples\, results in
+Downloads\Pocketknife\ and the app's data in data\, so your own settings and Downloads are untouched.
 .PARAMETER Screenshots
 Where to save PNG screenshots.
 .PARAMETER EngineCache
@@ -56,18 +57,23 @@ function Cond($property, $value) { New-Object System.Windows.Automation.Property
 
 $Work = [IO.Path]::GetFullPath($Work)
 $data = Join-Path $Work "data"
-$outputs = Join-Path $Work "outputs"
-$inputs = Join-Path $Work "inputs"
+$outputs = Join-Path $Work "Downloads\Pocketknife"
+$inputs = Join-Path $Work "Samples"
+$marker = Join-Path $Work ".pocketknife-smoke"
+if ((Test-Path $Work) -and -not (Test-Path $marker)) { throw "$Work exists and was not created by this script. Choose a new folder." }
 Remove-Item $Work -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force $data, $outputs, $inputs, $Screenshots | Out-Null
-Copy-Item (Join-Path $PSScriptRoot "..\tests\Toolbox.Tests\Fixtures\*") $inputs
-Copy-Item (Join-Path $inputs "sample.pdf") (Join-Path $inputs "second.pdf")
+New-Item -ItemType File $marker | Out-Null
+$fixtures = Join-Path $PSScriptRoot "..\tests\Pocketknife.Tests\Fixtures"
+$samples = @{ "sample.mp4" = "holiday-clip.mp4"; "sample.pdf" = "invoice.pdf"; "speech.mp3" = "voice-note.mp3"; "subject.png" = "product-photo.png" }
+foreach ($name in $samples.Keys) { Copy-Item (Join-Path $fixtures $name) (Join-Path $inputs $samples[$name]) }
+Copy-Item (Join-Path $inputs "invoice.pdf") (Join-Path $inputs "receipt.pdf")
 if ($EngineCache) { Copy-Item $EngineCache (Join-Path $data "engines") -Recurse }
 @{ OutputRoot = $outputs; Theme = $Theme; KeepRunningInTray = $true; LauncherHotkey = "Ctrl+Alt+Space" } |
     ConvertTo-Json | Set-Content -Encoding utf8 (Join-Path $data "settings.json")
 $before = Get-ChildItem $inputs | ForEach-Object { "$($_.Name)=$((Get-FileHash $_.FullName).Hash)" }
 
-$env:WINDOWS_TOOLBOX_DATA = $data
+$env:POCKETKNIFE_DATA = $data
 $process = Start-Process $Exe -PassThru
 
 function Wait-For([scriptblock]$probe, [int]$seconds = 30, [string]$what = "condition") {
@@ -102,7 +108,7 @@ function Save-Shot($element, [string]$name) {
 function Open-Tool([string]$id, [string[]]$paths) {
     Start-Process $Exe -ArgumentList (@("--tool", $id) + ($paths | ForEach-Object { "`"$_`"" })) -Wait
     Start-Sleep -Milliseconds 800
-    $window = Get-Window "Windows Toolbox"
+    $window = Get-Window "Pocketknife"
     Wait-For { $window.FindFirst($Tree::Descendants, (Cond $A::AutomationIdProperty "RunButton")) } 10 "tool page $id" | Out-Null
     return $window
 }
@@ -145,7 +151,7 @@ function Check-Run([string]$id, $window, [hashtable]$result, [string]$shot) {
 }
 
 try {
-    $main = Get-Window "Windows Toolbox"
+    $main = Get-Window "Pocketknife"
     Save-Shot $main "01-home"
 
     [Native]::Chord(@(0x11, 0x12, 0x20))
@@ -157,54 +163,54 @@ try {
     Write-Host "launcher hotkey      opened, 'gif' -> Video to GIF"
     [Native]::Chord(@(0x1B))
 
-    $w = Open-Tool "compress-video" @("$inputs\sample.mp4")
+    $w = Open-Tool "compress-video" @("$inputs\holiday-clip.mp4")
     Check-Run "compress-video" $w (Run-Tool $w) "10-compress-video"
 
-    $w = Open-Tool "convert-media" @("$inputs\sample.mp4")
+    $w = Open-Tool "convert-media" @("$inputs\holiday-clip.mp4")
     Check-Run "convert-media" $w (Run-Tool $w) "11-convert-media"
 
-    $w = Open-Tool "video-to-gif" @("$inputs\sample.mp4")
+    $w = Open-Tool "video-to-gif" @("$inputs\holiday-clip.mp4")
     Check-Run "video-to-gif" $w (Run-Tool $w) "12-video-to-gif"
 
     $w = Open-Tool "download-video" @()
     Set-Text $w $A::AutomationIdProperty "TextInput" $VideoUrl
     Check-Run "download-video" $w (Run-Tool $w) "13-download-video"
 
-    $w = Open-Tool "remove-background" @("$inputs\subject.png")
+    $w = Open-Tool "remove-background" @("$inputs\product-photo.png")
     Check-Run "remove-background" $w (Run-Tool $w) "14-remove-background"
 
-    $w = Open-Tool "merge-pdfs" @("$inputs\sample.pdf", "$inputs\second.pdf")
+    $w = Open-Tool "merge-pdfs" @("$inputs\invoice.pdf", "$inputs\receipt.pdf")
     Check-Run "merge-pdfs" $w (Run-Tool $w) "15-merge-pdfs"
 
-    $w = Open-Tool "split-pdf" @("$inputs\sample.pdf")
+    $w = Open-Tool "split-pdf" @("$inputs\invoice.pdf")
     Check-Run "split-pdf" $w (Run-Tool $w) "16-split-pdf"
 
-    $w = Open-Tool "redact-pdf" @("$inputs\sample.pdf")
+    $w = Open-Tool "redact-pdf" @("$inputs\invoice.pdf")
     Set-Text $w $A::NameProperty "Words or phrases to redact" "Jane Doe`r`n4111-2222-3333"
     Set-Toggle $w "Redact email addresses"
     Set-Toggle $w "Redact phone numbers"
     Check-Run "redact-pdf" $w (Run-Tool $w) "17-redact-pdf"
 
-    $w = Open-Tool "transcribe" @("$inputs\speech.mp3")
+    $w = Open-Tool "transcribe" @("$inputs\voice-note.mp3")
     Save-Shot $w "18-transcribe-before"
     Check-Run "transcribe" $w (Run-Tool $w 900) "18-transcribe"
 
     $w = Open-Tool "make-qr-code" @()
-    Set-Text $w $A::AutomationIdProperty "TextInput" "https://github.com/kenhendricks00"
+    Set-Text $w $A::AutomationIdProperty "TextInput" "https://github.com/kenhendricks00/Pocketknife"
     Check-Run "make-qr-code" $w (Run-Tool $w) "19-make-qr-code"
 
     $qr = Get-ChildItem $outputs -Recurse -Filter "QR code.png" | Select-Object -First 1
     $w = Open-Tool "read-qr-code" @($qr.FullName)
     Check-Run "read-qr-code" $w (Run-Tool $w) "20-read-qr-code"
     $decoded = (Find $w $A::AutomationIdProperty "Messages").GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
-    if ($decoded -ne "https://github.com/kenhendricks00") { throw "QR read back '$decoded'" }
+    if ($decoded -ne "https://github.com/kenhendricks00/Pocketknife") { throw "QR read back '$decoded'" }
 
     (Find $main $A::AutomationIdProperty "SettingsButton").GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
     Save-Shot $main "30-settings"
 }
 finally {
     Stop-Process -Id $process.Id -ErrorAction SilentlyContinue
-    Remove-Item Env:\WINDOWS_TOOLBOX_DATA
+    Remove-Item Env:\POCKETKNIFE_DATA
 }
 
 $after = Get-ChildItem $inputs | ForEach-Object { "$($_.Name)=$((Get-FileHash $_.FullName).Hash)" }

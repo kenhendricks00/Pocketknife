@@ -1,12 +1,12 @@
 ## Unreleased
 
-#### **First release: 11 everyday tools that run on your PC**
+#### **First release of Pocketknife, a PC multitool for Windows: 11 everyday tools that run on your PC**
 - **Video & Audio:** Download Video, Compress Video, Convert Video & Audio, Video to GIF.
 - **Images:** Remove Background.
 - **PDF:** Merge PDFs, Split PDF, Redact PDF.
 - **Text & Speech:** Transcribe (TXT and SRT).
 - **Files:** Make QR Code, Read QR Code.
-- Every tool takes one file or a whole folder, never changes the originals, and writes to a new dated folder in `Downloads\Windows Toolbox` (configurable).
+- Every tool takes one file or a whole folder, never changes the originals, and writes to a new dated folder in `Downloads\Pocketknife` (configurable).
 - Redact PDF rebuilds every page as an image with the matches painted black, so the text underneath, fonts and document metadata are removed.
 
 #### **Quick launcher and notification-area icon**

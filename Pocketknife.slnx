@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Pocketknife.App/Pocketknife.App.csproj" />
+    <Project Path="src/Pocketknife.Core/Pocketknife.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Pocketknife.Tests/Pocketknife.Tests.csproj" />
+  </Folder>
+</Solution>

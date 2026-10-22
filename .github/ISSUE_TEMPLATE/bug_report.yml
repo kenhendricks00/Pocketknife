@@ -38,7 +38,7 @@ body:
   - type: input
     id: app-version
     attributes:
-      label: Windows Toolbox Version
+      label: Pocketknife Version
       description: Shown under Settings → About.
     validations:
       required: false

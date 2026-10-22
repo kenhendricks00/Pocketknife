@@ -24,22 +24,22 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ runner.temp }}\engines
-          key: engines-${{ hashFiles('src/Toolbox.Core/Engines/EngineSpec.cs') }}
-      - run: dotnet restore WindowsToolbox.slnx
+          key: engines-${{ hashFiles('src/Pocketknife.Core/Engines/EngineSpec.cs') }}
+      - run: dotnet restore Pocketknife.slnx
       - name: Check formatting
-        run: dotnet format WindowsToolbox.slnx --verify-no-changes --no-restore
+        run: dotnet format Pocketknife.slnx --verify-no-changes --no-restore
       - name: Build
-        run: dotnet build WindowsToolbox.slnx -c Release --no-restore
+        run: dotnet build Pocketknife.slnx -c Release --no-restore
       - name: Run tests
         env:
-          TOOLBOX_TEST_ENGINES: ${{ runner.temp }}\engines
-        run: dotnet test --project tests/Toolbox.Tests -c Release --no-build
+          POCKETKNIFE_TEST_ENGINES: ${{ runner.temp }}\engines
+        run: dotnet test --project tests/Pocketknife.Tests -c Release --no-build
       - name: Build portable zip and installer
         shell: pwsh
         run: ./scripts/package.ps1
       - name: Upload release artifacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: windows-toolbox-${{ github.sha }}
+          name: pocketknife-${{ github.sha }}
           path: release/
           retention-days: 14

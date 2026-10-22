@@ -1,24 +1,24 @@
 <p align="center">
-  <a href="https://github.com/kenhendricks00/windows-toolbox/releases"><img src="assets/logo.png" width="112" alt="Windows Toolbox" /></a>
+  <a href="https://github.com/kenhendricks00/Pocketknife/releases"><img src="assets/logo.png" width="112" alt="Pocketknife" /></a>
 </p>
 <div align="center">
-  <a href="https://github.com/kenhendricks00/windows-toolbox/releases">
+  <a href="https://github.com/kenhendricks00/Pocketknife/releases">
     <img src="https://img.shields.io/static/v1?label=Download&message=Windows%2010%20%2F%2011&color=16a34a" alt="Download for Windows"></a>
   <a href="LICENSE">
     <img src="https://img.shields.io/static/v1?label=License&message=MIT&color=blue" alt="MIT License"></a>
-  <a href="https://github.com/kenhendricks00/windows-toolbox/commits/main/">
-    <img src="https://img.shields.io/github/last-commit/kenhendricks00/windows-toolbox?label=Last%20Commit&color=green" alt="Last Commit"></a>
+  <a href="https://github.com/kenhendricks00/Pocketknife/commits/main/">
+    <img src="https://img.shields.io/github/last-commit/kenhendricks00/Pocketknife?label=Last%20Commit&color=green" alt="Last Commit"></a>
 </div>
 <br>
-<h2> <div align="center"><b> Everyday file tools for Windows, all on your PC. No account, no uploads. </b></div> </h2>
+<h2> <div align="center"><b> A PC multitool for Windows. Everyday file tools that run on your PC, with no account and no uploads. </b></div> </h2>
 
 <p align="center">
-<img src="assets/screenshots/home-light.png" width="49%" alt="Windows Toolbox in light mode">
-<img src="assets/screenshots/home-dark.png" width="49%" alt="Windows Toolbox in dark mode">
+<img src="assets/screenshots/home-light.png" width="49%" alt="Pocketknife in light mode">
+<img src="assets/screenshots/home-dark.png" width="49%" alt="Pocketknife in dark mode">
 </p>
 
 # 🛠️ Usage
-Open a tool, drop in a file or a whole folder, pick the few settings that tool needs, and press <code>Start</code>. Results go to a **new dated folder** in <code>Downloads\Windows Toolbox</code>, for example <code>2026-10-22 14.05.31 Compress Video</code>. Your original files are never changed and nothing is ever overwritten.
+Open a tool, drop in a file or a whole folder, pick the few settings that tool needs, and press <code>Start</code>. Results go to a **new dated folder** in <code>Downloads\Pocketknife</code>, for example <code>2026-10-22 14.05.31 Compress Video</code>. Your original files are never changed and nothing is ever overwritten.
 
 > [!TIP]
 > Press <code>Ctrl+Alt+Space</code> anywhere in Windows, type a few letters (<code>gif</code>, <code>redact</code>, <code>qr</code>…) and press <code>Enter</code> to jump straight to a tool. The shortcut can be changed in Settings.
@@ -45,7 +45,7 @@ Open a tool, drop in a file or a whole folder, pick the few settings that tool n
 
 Every tool that takes files also takes a folder. All of its matching files are processed in one run, and a file that fails is reported without stopping the rest.
 
-# 🌟 Why Choose Windows Toolbox?
+# 🌟 Why Choose Pocketknife?
 - **Private by design**: Every tool runs on your PC, including transcription and background removal. There is no account, no analytics and no uploads.
 - **One screen per tool**: Each tool shows only the settings it needs, so there is nothing to learn.
 - **Safe with your files**: Inputs are opened read-only, and every run writes to its own new folder, so nothing is overwritten.
@@ -62,7 +62,7 @@ Every tool that takes files also takes a folder. All of its matching files are p
     - Drop files or folders onto any tool, or choose them with the file and folder pickers.
     - Merge PDFs lets you reorder files before merging.
 3. **Output you can trust**:
-    - A new dated folder per run under <code>Downloads\Windows Toolbox</code> (or a folder you choose in Settings).
+    - A new dated folder per run under <code>Downloads\Pocketknife</code> (or a folder you choose in Settings).
     - Partial files from a failed or cancelled job are removed, and finished files are kept.
 4. **Local AI**:
     - **Transcribe** uses Whisper through whisper.cpp, with a *Better* (148 MB) or *Faster* (78 MB) model.
@@ -72,11 +72,15 @@ Every tool that takes files also takes a folder. All of its matching files are p
 6. **Runs in the background**:
     - Closing the window keeps the launcher available from the notification area. Optionally start with Windows.
 7. **Command line**:
-    - <code>WindowsToolbox.exe --tool compress-video "C:\Videos\clip.mp4"</code> opens a tool with inputs filled in. <code>--launcher</code> opens the launcher and <code>--background</code> starts in the notification area.
+    - <code>Pocketknife.exe --tool compress-video "C:\Videos\clip.mp4"</code> opens a tool with inputs filled in. <code>--launcher</code> opens the launcher and <code>--background</code> starts in the notification area.
 
 <p align="center">
 <img src="assets/screenshots/redact-pdf.png" width="49%" alt="Redact PDF">
 <img src="assets/screenshots/transcribe.png" width="49%" alt="Transcribe">
+</p>
+<p align="center">
+<img src="assets/screenshots/download-video.png" width="49%" alt="Download Video">
+<img src="assets/screenshots/settings.png" width="49%" alt="Settings with engine status">
 </p>
 <p align="center">
 <img src="assets/screenshots/redact-before-after.png" width="70%" alt="A PDF before and after redaction">
@@ -86,14 +90,14 @@ Every tool that takes files also takes a folder. All of its matching files are p
 </p>
 
 # 🔒 Privacy
-Windows Toolbox never sends your files anywhere. It only uses the network for two things:
+Pocketknife never sends your files anywhere. It only uses the network for two things:
 - **Download Video** fetches the links you paste.
 - **First use of an engine** downloads it from the pinned release listed below. You can skip this by pointing Settings at your own copy.
 
 There is no telemetry, no crash reporting and no update check.
 
 # ⚙️ Engines
-Engines are stored in <code>%LOCALAPPDATA%\WindowsToolbox\engines</code>. They are not bundled with the app.
+Engines are stored in <code>%LOCALAPPDATA%\Pocketknife\engines</code>. They are not bundled with the app.
 
 | Engine | Pinned version | License | Used by |
 | --- | --- | --- | --- |
@@ -103,9 +107,9 @@ Engines are stored in <code>%LOCALAPPDATA%\WindowsToolbox\engines</code>. They a
 | [IS-Net](https://github.com/xuebinqin/DIS) and [U²-Net](https://github.com/xuebinqin/U-2-Net) ONNX models | isnet-general-use, u2netp | Apache-2.0 | Remove Background |
 
 # 🚀 Install
-Download the latest release from the [Releases page](https://github.com/kenhendricks00/windows-toolbox/releases):
-- **Installer**: <code>WindowsToolbox-&lt;version&gt;-win-x64-setup.exe</code> installs for your user only (no admin needed) and adds a Start menu entry.
-- **Portable**: <code>WindowsToolbox-&lt;version&gt;-win-x64-portable.zip</code>. Unzip anywhere and run <code>WindowsToolbox.exe</code>.
+Download the latest release from the [Releases page](https://github.com/kenhendricks00/Pocketknife/releases):
+- **Installer**: <code>Pocketknife-&lt;version&gt;-win-x64-setup.exe</code> installs for your user only (no admin needed) and adds a Start menu entry.
+- **Portable**: <code>Pocketknife-&lt;version&gt;-win-x64-portable.zip</code>. Unzip anywhere and run <code>Pocketknife.exe</code>.
 
 Requires 64-bit Windows 10 (version 2004 or later) or Windows 11. The .NET runtime is included. The builds aren't code-signed yet, so Windows SmartScreen may ask you to confirm the first launch.
 
@@ -113,24 +117,24 @@ Requires 64-bit Windows 10 (version 2004 or later) or Windows 11. The .NET runti
 You need the [.NET 10 SDK](https://dotnet.microsoft.com/download). [Inno Setup 6](https://jrsoftware.org/isinfo.php) is optional, for the installer.
 
 ```powershell
-dotnet build WindowsToolbox.slnx
-dotnet test --project tests/Toolbox.Tests   # downloads the engines once into %LOCALAPPDATA%\WindowsToolbox-tests
-dotnet format WindowsToolbox.slnx --verify-no-changes
+dotnet build Pocketknife.slnx
+dotnet test --project tests/Pocketknife.Tests   # downloads the engines once into %LOCALAPPDATA%\Pocketknife-tests
+dotnet format Pocketknife.slnx --verify-no-changes
 ./scripts/package.ps1                          # release/ portable zip, installer and SHA256SUMS.txt
-./scripts/ui-smoke.ps1 -Exe artifacts/publish/WindowsToolbox.exe -Work $env:TEMP/wt-smoke -Screenshots $env:TEMP/wt-shots
+./scripts/ui-smoke.ps1 -Exe artifacts/publish/Pocketknife.exe -Work $env:TEMP/pocketknife-smoke -Screenshots $env:TEMP/pocketknife-shots
 ```
 
 <code>ui-smoke.ps1</code> drives the real app through UI Automation, runs every tool on the test fixtures, presses the launcher hotkey and checks that the input files were not changed.
 
-**Adding a tool** means writing one class that derives from <code>Tool</code> (see <code>src/Toolbox.Core/Tools</code>) and listing it in <code>ToolRegistry</code>. The class declares its input, its settings and the engines it needs, and the app builds its screen from that.
+**Adding a tool** means writing one class that derives from <code>Tool</code> (see <code>src/Pocketknife.Core/Tools</code>) and listing it in <code>ToolRegistry</code>. The class declares its input, its settings and the engines it needs, and the app builds its screen from that.
 
 # 💬 Support
-If you need help or found a bug, open an [issue on GitHub](https://github.com/kenhendricks00/windows-toolbox/issues).
+If you need help or found a bug, open an [issue on GitHub](https://github.com/kenhendricks00/Pocketknife/issues).
 
 # 🎉 Quick Links
-- [Download the latest release](https://github.com/kenhendricks00/windows-toolbox/releases)
-- [Report a bug or request a tool](https://github.com/kenhendricks00/windows-toolbox/issues/new/choose)
-- [Star the source code on GitHub](https://github.com/kenhendricks00/windows-toolbox)
+- [Download the latest release](https://github.com/kenhendricks00/Pocketknife/releases)
+- [Report a bug or request a tool](https://github.com/kenhendricks00/Pocketknife/issues/new/choose)
+- [Star the source code on GitHub](https://github.com/kenhendricks00/Pocketknife)
 
 # 📜 Credits
 - Built with [.NET](https://dotnet.microsoft.com) and WPF with the Fluent theme
@@ -146,4 +150,4 @@ Full license texts are in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 Copyright (c) 2026 Kenneth Hendricks.
 
-Windows Toolbox is licensed under the [MIT License](LICENSE). Bundled libraries are MIT or Apache-2.0. FFmpeg (GPL) and yt-dlp are downloaded separately at first use and run as separate programs, so they are not part of this app's distribution.
+Pocketknife is licensed under the [MIT License](LICENSE). Bundled libraries are MIT or Apache-2.0. FFmpeg (GPL) and yt-dlp are downloaded separately at first use and run as separate programs, so they are not part of this app's distribution.
