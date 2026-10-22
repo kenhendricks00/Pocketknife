@@ -1,0 +1,13 @@
+* text=auto eol=lf
+*.cs text eol=crlf
+*.xaml text eol=crlf
+*.csproj text eol=crlf
+*.props text eol=crlf
+*.slnx text eol=crlf
+*.ps1 text eol=crlf
+*.iss text eol=crlf
+*.png binary
+*.ico binary
+*.mp4 binary
+*.mp3 binary
+*.pdf binary

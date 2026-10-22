@@ -1,0 +1,63 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 4 0 R 5 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 7 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 8 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 226 >>
+stream
+BT /F1 18 Tf 72 700 Td (Invoice for Jane Doe) Tj ET
+BT /F1 18 Tf 72 664 Td (Contact: jane.doe@example.com) Tj ET
+BT /F1 18 Tf 72 628 Td (Phone: (555) 123-4567) Tj ET
+BT /F1 18 Tf 72 592 Td (Account number 4111-2222-3333) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Length 91 >>
+stream
+BT /F1 18 Tf 72 700 Td (Page two) Tj ET
+BT /F1 18 Tf 72 664 Td (Nothing secret here.) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Length 92 >>
+stream
+BT /F1 18 Tf 72 700 Td (Page three) Tj ET
+BT /F1 18 Tf 72 664 Td (Signed by Jane Doe.) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+10 0 obj
+<< /Title (Confidential report) /Author (Jane Doe) /Subject (Quarterly secrets) /Keywords (private) >>
+endobj
+xref
+0 11
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000253 00000 n 
+0000000379 00000 n 
+0000000505 00000 n 
+0000000782 00000 n 
+0000000923 00000 n 
+0000001065 00000 n 
+0000001162 00000 n 
+trailer
+<< /Size 11 /Root 1 0 R /Info 10 0 R >>
+startxref
+1281
+%%EOF

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Toolbox.App/Toolbox.App.csproj" />
+    <Project Path="src/Toolbox.Core/Toolbox.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Toolbox.Tests/Toolbox.Tests.csproj" />
+  </Folder>
+</Solution>
