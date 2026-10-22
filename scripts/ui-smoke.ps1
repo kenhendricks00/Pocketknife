@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Drives the real app through UI Automation: opens every tool, runs it on the test fixtures, checks the result and
 saves a screenshot of each screen. Also presses the global launcher hotkey and checks the launcher appears.
@@ -23,7 +23,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Drawing
+Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Drawing, System.Windows.Forms
 Add-Type @"
 using System;
 using System.Drawing;
@@ -32,15 +32,33 @@ public static class Native {
     [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hwnd);
     [DllImport("user32.dll")] public static extern bool SetProcessDpiAwarenessContext(IntPtr value);
+    [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr hwnd);
     [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr hwnd, int attribute, out RECT rect, int size);
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
-    public static Bitmap Capture(IntPtr hwnd) {
+    // inset trims a window's transparent margin (the launcher draws its card 16 px inside its window).
+    public static Bitmap Capture(IntPtr hwnd, int inset, int radius) {
         SetForegroundWindow(hwnd);
         System.Threading.Thread.Sleep(400);
         RECT r; DwmGetWindowAttribute(hwnd, 9, out r, Marshal.SizeOf(typeof(RECT)));
-        var bmp = new Bitmap(r.Right - r.Left, r.Bottom - r.Top);
-        using (var g = Graphics.FromImage(bmp)) { g.CopyFromScreen(r.Left, r.Top, 0, 0, bmp.Size); }
+        double scale = GetDpiForWindow(hwnd) / 96.0;
+        inset = (int)Math.Round(inset * scale);
+        radius = (int)Math.Round(radius * scale);
+        var bmp = new Bitmap(r.Right - r.Left - 2 * inset, r.Bottom - r.Top - 2 * inset);
+        using (var g = Graphics.FromImage(bmp)) { g.CopyFromScreen(r.Left + inset, r.Top + inset, 0, 0, bmp.Size); }
+        RoundCorners(bmp, radius);
         return bmp;
+    }
+    // Windows 11 windows have rounded corners; make the pixels outside them transparent (antialiased).
+    static void RoundCorners(Bitmap bmp, int radius) {
+        for (int y = 0; y < radius; y++)
+        for (int x = 0; x < radius; x++) {
+            double dx = radius - x - 0.5, dy = radius - y - 0.5;
+            double coverage = Math.Max(0, Math.Min(1, radius - Math.Sqrt(dx * dx + dy * dy) + 0.5));
+            foreach (var p in new[] { new Point(x, y), new Point(bmp.Width - 1 - x, y), new Point(x, bmp.Height - 1 - y), new Point(bmp.Width - 1 - x, bmp.Height - 1 - y) }) {
+                var c = bmp.GetPixel(p.X, p.Y);
+                bmp.SetPixel(p.X, p.Y, Color.FromArgb((int)Math.Round(c.A * coverage), c.R, c.G, c.B));
+            }
+        }
     }
     public static void Chord(byte[] keys) {
         foreach (var k in keys) keybd_event(k, 0, 0, UIntPtr.Zero);
@@ -73,6 +91,17 @@ if ($EngineCache) { Copy-Item $EngineCache (Join-Path $data "engines") -Recurse 
     ConvertTo-Json | Set-Content -Encoding utf8 (Join-Path $data "settings.json")
 $before = Get-ChildItem $inputs | ForEach-Object { "$($_.Name)=$((Get-FileHash $_.FullName).Hash)" }
 
+# A plain backdrop behind the app, so the translucent window border and rounded corners never pick up
+# other windows or the desktop in the screenshots.
+$backdrop = New-Object System.Windows.Forms.Form
+$backdrop.FormBorderStyle = "None"
+$backdrop.ShowInTaskbar = $false
+$backdrop.StartPosition = "Manual"
+$backdrop.Bounds = [System.Windows.Forms.SystemInformation]::VirtualScreen
+$backdrop.BackColor = if ($Theme -eq "Dark") { [System.Drawing.Color]::FromArgb(32, 32, 32) } else { [System.Drawing.Color]::FromArgb(243, 243, 243) }
+$backdrop.Show()
+[System.Windows.Forms.Application]::DoEvents()
+
 $env:POCKETKNIFE_DATA = $data
 $process = Start-Process $Exe -PassThru
 
@@ -81,6 +110,7 @@ function Wait-For([scriptblock]$probe, [int]$seconds = 30, [string]$what = "cond
     while ((Get-Date) -lt $deadline) {
         $value = & $probe
         if ($value) { return $value }
+        [System.Windows.Forms.Application]::DoEvents()
         Start-Sleep -Milliseconds 250
     }
     throw "Timed out waiting for $what"
@@ -97,9 +127,10 @@ function Find([System.Windows.Automation.AutomationElement]$root, $property, $va
     Wait-For { $root.FindFirst($Tree::Descendants, (Cond $property $value)) } $seconds "element $value"
 }
 
-function Save-Shot($element, [string]$name) {
+function Save-Shot($element, [string]$name, [int]$inset = 0, [int]$radius = 8) {
+    [System.Windows.Forms.Application]::DoEvents()
     Start-Sleep -Milliseconds 600
-    $bitmap = [Native]::Capture([IntPtr]$element.Current.NativeWindowHandle)
+    $bitmap = [Native]::Capture([IntPtr]$element.Current.NativeWindowHandle, $inset, $radius)
     $bitmap.Save((Join-Path $Screenshots "$name.png"), [System.Drawing.Imaging.ImageFormat]::Png)
     $bitmap.Dispose()
     Write-Host "  screenshot $name.png"
@@ -157,7 +188,7 @@ try {
     [Native]::Chord(@(0x11, 0x12, 0x20))
     $launcher = Get-Window "Find a tool"
     Set-Text $launcher $A::AutomationIdProperty "LauncherQuery" "gif"
-    Save-Shot $launcher "02-launcher"
+    Save-Shot $launcher "02-launcher" 17 9
     $first = (Find $launcher $A::AutomationIdProperty "LauncherResults").FindFirst($Tree::Children, (Cond $A::ControlTypeProperty ([System.Windows.Automation.ControlType]::ListItem)))
     if ($first.Current.Name -ne "Video to GIF") { throw "Launcher's first result was '$($first.Current.Name)'" }
     Write-Host "launcher hotkey      opened, 'gif' -> Video to GIF"
@@ -210,6 +241,7 @@ try {
 }
 finally {
     Stop-Process -Id $process.Id -ErrorAction SilentlyContinue
+    $backdrop.Close()
     Remove-Item Env:\POCKETKNIFE_DATA
 }
 
