@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/kenhendricks00/Pocketknife/releases"><img src="assets/logo.png" width="112" alt="Pocketknife" /></a>
+  <a href="https://github.com/kenhendricks00/Pocketknife/releases"><img src="assets/banner.png" width="450" alt="Pocketknife" /></a>
 </p>
 <div align="center">
   <a href="https://github.com/kenhendricks00/Pocketknife/releases">

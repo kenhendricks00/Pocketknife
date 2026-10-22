@@ -6,6 +6,7 @@ namespace Pocketknife.App.Services;
 public sealed class TrayIcon : IDisposable
 {
     private readonly Forms.NotifyIcon _icon;
+    private readonly System.Drawing.Icon _image;
     private bool _toldAboutTray;
 
     public TrayIcon(Action open, Action launcher, Action quit)
@@ -15,9 +16,14 @@ public sealed class TrayIcon : IDisposable
         menu.Items.Add("Find a tool…", null, (_, _) => launcher());
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Quit", null, (_, _) => quit());
+        using (var stream = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Assets/app.ico")).Stream)
+        {
+            _image = new System.Drawing.Icon(stream, Forms.SystemInformation.SmallIconSize);
+        }
+
         _icon = new Forms.NotifyIcon
         {
-            Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!),
+            Icon = _image,
             Text = "Pocketknife",
             ContextMenuStrip = menu,
             Visible = true,
@@ -44,5 +50,6 @@ public sealed class TrayIcon : IDisposable
     {
         _icon.Visible = false;
         _icon.Dispose();
+        _image.Dispose();
     }
 }

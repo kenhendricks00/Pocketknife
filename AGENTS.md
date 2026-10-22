@@ -6,6 +6,7 @@
 - Format: `dotnet format Pocketknife.slnx --verify-no-changes`.
 - Package: `./scripts/package.ps1` writes the portable zip, installer and checksums to `release/`.
 - UI check: `./scripts/ui-smoke.ps1` drives the published app with UI Automation and saves screenshots.
+- Logo: `./scripts/make-icon.ps1` rebuilds `app.ico`, the banner, the social preview and the installer images from `assets/logo.png`. Don't edit those by hand.
 
 ## Layout
 - `src/Pocketknife.Core`: tools, the runner, engines, PDF/image/media helpers. No UI code beyond WPF imaging.

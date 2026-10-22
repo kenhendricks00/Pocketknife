@@ -9,6 +9,10 @@
 - Every tool takes one file or a whole folder, never changes the originals, and writes to a new dated folder in `Downloads\Pocketknife` (configurable).
 - Redact PDF rebuilds every page as an image with the matches painted black, so the text underneath, fonts and document metadata are removed.
 
+#### **Pocketknife logo**
+- The red pocketknife is now the app, window, taskbar, tray, Start menu and installer icon, and the README banner.
+- Small icon sizes (16 to 32 px) are sharpened and outlined slightly so the blade stays visible on light taskbars.
+
 #### **Quick launcher and notification-area icon**
 - `Ctrl+Alt+Space` opens a search box from any app. Type a few letters and press Enter to open a tool. The shortcut can be changed in Settings.
 - Closing the window keeps the app in the notification area so the launcher stays available. It can also start with Windows.

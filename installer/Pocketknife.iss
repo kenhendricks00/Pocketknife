@@ -27,6 +27,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.19041
 LicenseFile=..\LICENSE
 SetupIconFile=..\src\Pocketknife.App\Assets\app.ico
+WizardSmallImageFile=wizard-small-55.png,wizard-small-110.png
 UninstallDisplayIcon={app}\Pocketknife.exe
 OutputDir={#OutputDir}
 OutputBaseFilename=Pocketknife-{#AppVersion}-win-x64-setup

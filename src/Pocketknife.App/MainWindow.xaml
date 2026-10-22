@@ -17,7 +17,7 @@
         <Border Grid.Column="0" Background="{DynamicResource LayerFillColorAltBrush}" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,1,0">
             <DockPanel Margin="12,16,12,12">
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,0,14">
-                    <Image Source="Assets/app.ico" Width="24" Height="24" />
+                    <Image Source="Assets/app.ico" Width="24" Height="24" RenderOptions.BitmapScalingMode="HighQuality" />
                     <TextBlock Text="Pocketknife" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" />
                 </StackPanel>
 
