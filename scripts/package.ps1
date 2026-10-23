@@ -36,8 +36,10 @@ if (-not $SkipInstaller) {
     if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
 }
 
-Get-ChildItem $release -File | Where-Object Name -ne "SHA256SUMS.txt" | ForEach-Object {
-    "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"
-} | Set-Content -Encoding ascii (Join-Path $release "SHA256SUMS.txt")
+# LF line endings so `sha256sum -c SHA256SUMS.txt` works in Git Bash, WSL and Linux, not just PowerShell.
+$sums = Get-ChildItem $release -File | Where-Object Name -ne "SHA256SUMS.txt" | ForEach-Object {
+    "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)`n"
+}
+[IO.File]::WriteAllText((Join-Path $release "SHA256SUMS.txt"), -join $sums, [Text.Encoding]::ASCII)
 
 Get-ChildItem $release -File | Format-Table Name, @{ n = "MB"; e = { "{0:N1}" -f ($_.Length / 1MB) } }
