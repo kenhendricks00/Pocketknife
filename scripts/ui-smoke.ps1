@@ -241,6 +241,8 @@ try {
 }
 finally {
     Stop-Process -Id $process.Id -ErrorAction SilentlyContinue
+    # Wait until it is gone, so a following run doesn't race this one for the single-instance pipe and the hotkey.
+    Wait-Process -Id $process.Id -Timeout 15 -ErrorAction SilentlyContinue
     $backdrop.Close()
     Remove-Item Env:\POCKETKNIFE_DATA
 }
