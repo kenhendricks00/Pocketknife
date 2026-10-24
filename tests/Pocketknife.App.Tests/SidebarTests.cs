@@ -1,9 +1,12 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Pocketknife.App.Services;
+using Pocketknife.App.ViewModels;
 using Pocketknife.App.Views;
+using Pocketknife.Core.Tools;
 
 namespace Pocketknife.App.Tests;
 
@@ -15,6 +18,109 @@ namespace Pocketknife.App.Tests;
 public class SidebarTests(UiThread ui)
 {
     private sealed record Row(string Label, double Contrast, double IconContrast, double IconSize, double IconLeft, double LabelLeft, double CenterOffset, double Height);
+
+    [Theory]
+    [InlineData("Light", "Dark")]
+    [InlineData("Dark", "Light")]
+    public void Title_is_readable_before_and_after_handle_creation_and_live_theme_changes(string initial, string opposite) => ui.Run(() =>
+    {
+        var previous = Application.Current.ThemeMode;
+        MainWindow? window = null;
+        try
+        {
+            AppResources.Apply(Application.Current, new ThemeMode(initial));
+            using var data = new TestData();
+            window = NewWindow(data);
+            var sidebar = (FrameworkElement)((Grid)window.Content).Children[0];
+            Assert.False(window.ShowActivated);
+            Assert.False(window.ShowInTaskbar);
+            Assert.Equal(IntPtr.Zero, new WindowInteropHelper(window).Handle);
+            AssertTitle(initial, "before-handle");
+
+            Assert.NotEqual(IntPtr.Zero, new WindowInteropHelper(window).EnsureHandle());
+            AssertTitle(initial, "with-handle");
+            foreach (var theme in new[] { opposite, initial })
+            {
+                AppResources.Apply(Application.Current, new ThemeMode(theme));
+                AssertTitle(theme, $"from-{initial.ToLowerInvariant()}");
+            }
+
+            void AssertTitle(string theme, string stage)
+            {
+                var bitmap = Render.ToBitmap(sidebar, 280, 1000, $"sidebar-title-{theme.ToLowerInvariant()}-{stage}");
+                var title = Assert.Single(Descendants(sidebar).OfType<TextBlock>(), t => t.Text == "Pocketknife");
+                var contrast = Contrast(bitmap, Bounds(title, sidebar));
+                Assert.True(contrast >= 4.5, $"{theme}, {stage}: title contrast {contrast:0.00}:1 is below 4.5:1.");
+                var ink = ((SolidColorBrush)title.Foreground).Color;
+                Assert.Equal(theme == "Light", Luminance(((uint)ink.R << 16) | ((uint)ink.G << 8) | ink.B) < 0.5);
+                Assert.False(window.IsVisible);
+            }
+        }
+        finally
+        {
+            window?.Close();
+            AppResources.Apply(Application.Current, previous);
+        }
+    });
+
+    [Theory]
+    [InlineData("Light", "Dark")]
+    [InlineData("Dark", "Light")]
+    public void Page_and_launcher_text_follows_live_themes_without_window_handles(string initial, string opposite) => ui.Run(() =>
+    {
+        var previous = Application.Current.ThemeMode;
+        LauncherWindow? launcher = null;
+        MainWindow? window = null;
+        try
+        {
+            AppResources.Apply(Application.Current, new ThemeMode(initial));
+            using var data = new TestData();
+            var services = data.Services();
+            using var hotkeys = new HotkeyService(() => { });
+            window = NewWindow(data);
+            var views = new List<(FrameworkElement View, string Label)>
+            {
+                (new HomeView(_ => { }, services), "All tools"),
+                (new SettingsView(services, new LauncherHotkey(hotkeys, services)), "Settings"),
+            };
+            views.AddRange(ToolRegistry.All.Select(tool =>
+                ((FrameworkElement)new ToolView(new ToolViewModel(tool, services), () => { }), tool.Name)));
+            launcher = new LauncherWindow(services, _ => { }, _ => { }, _ => { });
+            launcher.Query.Text = "gif";
+
+            foreach (var theme in new[] { initial, opposite, initial })
+            {
+                AppResources.Apply(Application.Current, new ThemeMode(theme));
+                foreach (var (view, label) in views)
+                {
+                    window.Page.Content = view;
+                    AssertText((FrameworkElement)window.Content, view, label);
+                }
+
+                AssertText((FrameworkElement)launcher.Content, (FrameworkElement)launcher.Content, "Video to GIF");
+                Assert.False(window.IsVisible);
+                Assert.Equal(IntPtr.Zero, new WindowInteropHelper(window).Handle);
+                Assert.False(launcher.IsVisible);
+                Assert.Equal(IntPtr.Zero, new WindowInteropHelper(launcher).Handle);
+
+                void AssertText(FrameworkElement root, FrameworkElement view, string label)
+                {
+                    var bitmap = Render.ToBitmap(root, 1120, 1000, $"text-{view.GetType().Name}-{label.Replace(' ', '-')}-{theme.ToLowerInvariant()}");
+                    var text = Assert.Single(Descendants(view).OfType<TextBlock>(), t => t.Text == label);
+                    var box = Bounds(text, root);
+                    box.Offset(VisualTreeHelper.GetOffset(root));
+                    var contrast = Contrast(bitmap, box);
+                    Assert.True(contrast >= 4.5, $"{theme}: '{label}' contrast {contrast:0.00}:1 is below 4.5:1.");
+                }
+            }
+        }
+        finally
+        {
+            launcher?.Close();
+            window?.Close();
+            AppResources.Apply(Application.Current, previous);
+        }
+    });
 
     [Theory]
     [InlineData("Light")]

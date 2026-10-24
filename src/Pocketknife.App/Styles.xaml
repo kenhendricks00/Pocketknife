@@ -7,6 +7,9 @@
     <local:VisibleWhenConverter x:Key="VisibleWhenSet" />
     <local:VisibleWhenConverter x:Key="VisibleWhenEmpty" Invert="True" />
 
+    <Style TargetType="{x:Type local:MainWindow}" BasedOn="{StaticResource {x:Type Window}}" />
+    <Style TargetType="{x:Type local:LauncherWindow}" BasedOn="{StaticResource {x:Type Window}}" />
+
     <!-- Everything clickable shows the hand cursor; disabled controls go back to the arrow. Text boxes keep the I-beam. -->
     <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Cursor" Value="Hand" />

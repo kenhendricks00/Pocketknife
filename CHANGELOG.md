@@ -1,4 +1,4 @@
-## Unreleased
+## 0.2.0 (Unreleased)
 
 #### **The launcher does math**
 - Type a calculation such as `12*(3+4)`, `200 + 10%`, `15% of 80`, `sqrt(2)`, `round(pi, 3)` or `255 to hex`, and the answer is the top result as you type. Enter copies it.
@@ -22,6 +22,7 @@
 - Tool cards, sidebar items, launcher results, buttons, check boxes, drop-downs and Settings rows show the hand. Disabled controls keep the arrow, and text boxes keep the text cursor.
 
 #### **Fixes**
+- Window text now inherits the Fluent theme from shared styles before a window handle exists, keeping the sidebar title, page headings and launcher readable through live light/dark changes.
 - The sidebar's All tools and Settings rows now match the tool rows: same icon size, column and text color in light and dark, the same hover, pressed and keyboard-focus look, and they show when their page is open.
 - Starting with Windows (`--background`) no longer opens the main window: building the tool list used to select and open the first tool, which showed the window.
 - A copy of Pocketknife started with its own data folder (as tests do) is now a separate instance, so it never hands its command line to the copy you're using.
