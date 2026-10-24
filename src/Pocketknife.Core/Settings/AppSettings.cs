@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Pocketknife.Core.Launcher;
 
 namespace Pocketknife.Core.Settings;
 
@@ -18,7 +19,11 @@ public sealed record AppSettings
 
     public AppTheme Theme { get; init; } = AppTheme.System;
 
-    public string LauncherHotkey { get; init; } = "Ctrl+Alt+Space";
+    public string LauncherHotkey { get; init; } = HotkeyGesture.Default;
+
+    public WebSearchSettings WebSearch { get; init; } = new();
+
+    public bool CalculatorEnabled { get; init; } = true;
 
     public bool KeepRunningInTray { get; init; } = true;
 
