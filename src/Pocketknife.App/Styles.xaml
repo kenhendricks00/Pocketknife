@@ -90,13 +90,27 @@
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
-    <Style x:Key="NavButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+    <!-- The sidebar's rows. The tool list and the All tools / Settings list both use NavList, so every row has the same
+         icon, text, spacing and Fluent hover, pressed, selected and focus states. Items have a Glyph and a Name. -->
+    <Style x:Key="NavItem" TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+        <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+    </Style>
+
+    <Style x:Key="NavList" TargetType="ListBox" BasedOn="{StaticResource {x:Type ListBox}}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Setter Property="HorizontalContentAlignment" Value="Left" />
-        <Setter Property="Padding" Value="10,8" />
-        <Setter Property="Margin" Value="0,1" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource NavItem}" />
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Margin="0,2">
+                        <TextBlock Style="{StaticResource Icon}" Text="{Binding Glyph}" Width="28" FontSize="15" />
+                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">

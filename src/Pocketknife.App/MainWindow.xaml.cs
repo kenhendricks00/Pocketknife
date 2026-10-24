@@ -11,6 +11,8 @@ namespace Pocketknife.App;
 
 public partial class MainWindow : Window
 {
+    private static readonly NavLink s_allTools = new("All tools", "\uE80F");
+    private static readonly NavLink s_settings = new("Settings", "\uE713");
     private readonly AppServices _services;
     private readonly LauncherHotkey _hotkey;
     private readonly Dictionary<string, ToolView> _toolViews = [];
@@ -26,6 +28,7 @@ public partial class MainWindow : Window
         _tools = new ListCollectionView(ToolRegistry.All.ToList());
         _tools.GroupDescriptions.Add(new PropertyGroupDescription(nameof(Tool.Category), new CategoryNameConverter()));
         ToolList.ItemsSource = _tools;
+        PageList.ItemsSource = new[] { s_allTools, s_settings };
         FocusSearchCommand = new RelayCommand(() =>
         {
             SearchBox.Focus();
@@ -77,27 +80,49 @@ public partial class MainWindow : Window
         Page.Content = view;
         _navigating = true;
         SearchBox.Text = "";
-        ToolList.SelectedItem = tool;
-        ToolList.ScrollIntoView(tool);
         _navigating = false;
+        Select(tool);
+        ToolList.ScrollIntoView(tool);
         Summon();
     }
 
     private void ShowHome()
     {
         Page.Content = new HomeView(tool => OpenTool(tool.Id, []), _services);
-        ToolList.SelectedItem = null;
+        Select(s_allTools);
     }
 
     private void OpenSettings()
     {
         Page.Content = new SettingsView(_services, _hotkey);
-        ToolList.SelectedItem = null;
+        Select(s_settings);
     }
 
-    private void OnHomeClick(object sender, RoutedEventArgs e) => ShowHome();
+    /// <summary>Marks the open page in the sidebar: a tool in the tool list, or All tools or Settings below it.</summary>
+    private void Select(object page)
+    {
+        _navigating = true;
+        ToolList.SelectedItem = page as Tool;
+        PageList.SelectedItem = page as NavLink;
+        _navigating = false;
+    }
 
-    private void OnSettingsClick(object sender, RoutedEventArgs e) => OpenSettings();
+    private void OnPageSelected(object sender, SelectionChangedEventArgs e)
+    {
+        if (_navigating)
+        {
+            return;
+        }
+
+        if (Equals(PageList.SelectedItem, s_allTools))
+        {
+            ShowHome();
+        }
+        else if (Equals(PageList.SelectedItem, s_settings))
+        {
+            OpenSettings();
+        }
+    }
 
     private void OnToolSelected(object sender, SelectionChangedEventArgs e)
     {
@@ -126,6 +151,8 @@ public partial class MainWindow : Window
             e.Handled = true;
         }
     }
+
+    private sealed record NavLink(string Name, string Glyph);
 
     private sealed class CategoryNameConverter : IValueConverter
     {

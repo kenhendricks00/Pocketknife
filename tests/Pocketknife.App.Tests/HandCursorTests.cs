@@ -163,6 +163,6 @@ public class HandCursorTests(UiThread ui)
         }
 
         Assert.Contains(fluent, style => style.Setters.OfType<Setter>().Any(s => s.Property == Control.TemplateProperty));
-        Assert.Same(button, ((Style)Application.Current.FindResource("NavButton")).BasedOn);
+        Assert.Same(Application.Current.FindResource(typeof(ListBoxItem)), ((Style)Application.Current.FindResource("NavItem")).BasedOn);
     });
 }

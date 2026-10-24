@@ -28,46 +28,31 @@
                                Visibility="{Binding Text, ElementName=SearchBox, Converter={StaticResource VisibleWhenEmpty}}" />
                 </Grid>
 
-                <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
-                    <Button Style="{StaticResource NavButton}" Click="OnHomeClick" AutomationProperties.AutomationId="HomeButton">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Style="{StaticResource Icon}" Text="&#xE80F;" Width="28" />
-                            <TextBlock Text="All tools" />
-                        </StackPanel>
-                    </Button>
-                    <Button Style="{StaticResource NavButton}" Click="OnSettingsClick" AutomationProperties.AutomationId="SettingsButton">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Style="{StaticResource Icon}" Text="&#xE713;" Width="28" />
-                            <TextBlock Text="Settings" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
+                <ListBox x:Name="PageList" DockPanel.Dock="Bottom" Margin="0,8,0,0" Style="{StaticResource NavList}" SelectionChanged="OnPageSelected"
+                         IsSynchronizedWithCurrentItem="False" AutomationProperties.AutomationId="PageList" />
 
-                <ListBox x:Name="ToolList" SelectionChanged="OnToolSelected" IsSynchronizedWithCurrentItem="False" BorderThickness="0" Background="Transparent"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.AutomationId="ToolList">
+                <ListBox x:Name="ToolList" Style="{StaticResource NavList}" SelectionChanged="OnToolSelected" IsSynchronizedWithCurrentItem="False"
+                         AutomationProperties.AutomationId="ToolList">
                     <ListBox.GroupStyle>
+                        <!-- WPF's default group indents its rows by 5 px; keep them in line with All tools and Settings. -->
                         <GroupStyle>
-                            <GroupStyle.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Margin="10,12,0,4"
-                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                </DataTemplate>
-                            </GroupStyle.HeaderTemplate>
+                            <GroupStyle.ContainerStyle>
+                                <Style TargetType="GroupItem">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="GroupItem">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Margin="12,12,0,4"
+                                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                    <ItemsPresenter />
+                                                </StackPanel>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </GroupStyle.ContainerStyle>
                         </GroupStyle>
                     </ListBox.GroupStyle>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" Margin="0,2">
-                                <TextBlock Style="{StaticResource Icon}" Text="{Binding Glyph}" Width="28" FontSize="15" />
-                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                            <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
-                        </Style>
-                    </ListBox.ItemContainerStyle>
                 </ListBox>
             </DockPanel>
         </Border>
