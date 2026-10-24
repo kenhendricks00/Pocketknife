@@ -4,7 +4,8 @@ Checks a published Pocketknife.exe end to end, silently: runs every tool on the 
 and the global hotkey, and checks the input files were not changed.
 
 .DESCRIPTION
-Safe to run while someone uses the PC. The app runs with POCKETKNIFE_HIDDEN=1, so its windows open off-screen
+Run on an isolated Windows desktop that is never displayed. UI Automation can activate even an off-screen
+window; the script refuses to run on the input desktop. The app runs with POCKETKNIFE_HIDDEN=1, so its windows open off-screen
 without taking focus, a taskbar button or a tray icon. The script never moves focus and never sends keystrokes or
 mouse input: it fills fields and presses buttons through UI Automation patterns, opens tools with the app's
 --tool command line, and tests the hotkey with Ctrl+Alt+Shift+F24 (there is no F24 key on normal keyboards) by
@@ -33,6 +34,24 @@ Add-Type @"
 using System;
 using System.Runtime.InteropServices;
 public static class SmokeNative {
+    [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
+    [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr GetThreadDesktop(uint threadId);
+    [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr OpenInputDesktop(uint flags, bool inherit, uint access);
+    [DllImport("user32.dll")] private static extern bool CloseDesktop(IntPtr desktop);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool GetUserObjectInformation(IntPtr handle, int index, System.Text.StringBuilder value, uint length, out uint needed);
+    private static string DesktopName(IntPtr desktop) {
+        var name = new System.Text.StringBuilder(256);
+        uint needed;
+        if (desktop == IntPtr.Zero || !GetUserObjectInformation(desktop, 2, name, 512, out needed))
+            throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+        return name.ToString();
+    }
+    public static bool UsesInputDesktop() {
+        var input = OpenInputDesktop(0, false, 1);
+        try { return DesktopName(GetThreadDesktop(GetCurrentThreadId())) == DesktopName(input); }
+        finally { if (input != IntPtr.Zero) CloseDesktop(input); }
+    }
     [DllImport("user32.dll", SetLastError = true)] public static extern bool RegisterHotKey(IntPtr hwnd, int id, uint modifiers, uint key);
     [DllImport("user32.dll")] public static extern bool UnregisterHotKey(IntPtr hwnd, int id);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr FindWindowEx(IntPtr parent, IntPtr after, string cls, string title);
@@ -40,6 +59,10 @@ public static class SmokeNative {
     [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
 }
 "@
+
+if ([SmokeNative]::UsesInputDesktop()) {
+    throw "Run this smoke test on an isolated Windows desktop that is never displayed. UI Automation may otherwise take focus."
+}
 
 $A = [System.Windows.Automation.AutomationElement]
 $Tree = [System.Windows.Automation.TreeScope]
