@@ -4,6 +4,7 @@
     <Project Path="src/Pocketknife.Core/Pocketknife.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Pocketknife.App.Tests/Pocketknife.App.Tests.csproj" />
     <Project Path="tests/Pocketknife.Tests/Pocketknife.Tests.csproj" />
   </Folder>
 </Solution>

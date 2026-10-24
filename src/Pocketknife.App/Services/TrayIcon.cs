@@ -16,7 +16,7 @@ public sealed class TrayIcon : IDisposable
         menu.Items.Add("Find a tool…", null, (_, _) => launcher());
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Quit", null, (_, _) => quit());
-        using (var stream = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Assets/app.ico")).Stream)
+        using (var stream = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Pocketknife;component/Assets/app.ico")).Stream)
         {
             _image = new System.Drawing.Icon(stream, Forms.SystemInformation.SmallIconSize);
         }
@@ -36,6 +36,8 @@ public sealed class TrayIcon : IDisposable
             }
         };
     }
+
+    public void Warn(string title, string text) => _icon.ShowBalloonTip(8000, title, text, Forms.ToolTipIcon.Warning);
 
     public void TellStillRunning(string hotkey)
     {

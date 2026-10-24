@@ -12,6 +12,7 @@ public partial class App : Application
     private MainWindow _main = null!;
     private LauncherWindow _launcher = null!;
     private HotkeyService _hotkey = null!;
+    private LauncherHotkey _launcherHotkey = null!;
     private TrayIcon? _tray;
     private bool _quitting;
 
@@ -27,7 +28,9 @@ public partial class App : Application
 
         _services = new AppServices();
         ApplyTheme();
-        _main = new MainWindow(_services);
+        _hotkey = new HotkeyService(() => _launcher.Summon());
+        _launcherHotkey = new LauncherHotkey(_hotkey, _services);
+        _main = new MainWindow(_services, _launcherHotkey);
         _main.Closing += (_, args) =>
         {
             if (_services.Settings.KeepRunningInTray && !_quitting)
@@ -41,15 +44,16 @@ public partial class App : Application
                 Quit();
             }
         };
-        _launcher = new LauncherWindow(id => _main.OpenTool(id, []));
-        _hotkey = new HotkeyService(_launcher.Summon);
-        _tray = new TrayIcon(_main.Summon, _launcher.Summon, Quit);
-        RegisterHotkey();
-        _services.SettingsChanged += (_, _) =>
+        _launcher = new LauncherWindow(_services, id => _main.OpenTool(id, []));
+        _tray = HiddenMode.IsOn ? null : new TrayIcon(_main.Summon, _launcher.Summon, Quit);
+        if (!_launcherHotkey.Register())
         {
-            ApplyTheme();
-            RegisterHotkey();
-        };
+            _tray?.Warn(
+                "Launcher shortcut unavailable",
+                $"{_launcherHotkey.Current} is used by another app. Choose a different shortcut in Settings, or open the launcher from this icon.");
+        }
+
+        _services.SettingsChanged += (_, _) => ApplyTheme();
 
         _instance.Listen(args => Dispatcher.BeginInvoke(() => HandleArguments(args, firstLaunch: false)));
         HandleArguments(e.Args, firstLaunch: true);
@@ -88,12 +92,10 @@ public partial class App : Application
         }
     }
 
-    private void RegisterHotkey() => _main.HotkeyRegistered = _hotkey.Register(_services.Settings.LauncherHotkey);
-
-    private void ApplyTheme() => ThemeMode = _services.Settings.Theme switch
+    private void ApplyTheme() => AppResources.Apply(this, _services.Settings.Theme switch
     {
         AppTheme.Light => ThemeMode.Light,
         AppTheme.Dark => ThemeMode.Dark,
         _ => ThemeMode.System,
-    };
+    });
 }

@@ -1,5 +1,32 @@
 ## Unreleased
 
+#### **The launcher does math**
+- Type a calculation such as `12*(3+4)`, `200 + 10%`, `15% of 80`, `sqrt(2)`, `round(pi, 3)` or `255 to hex`, and the answer is the top result as you type. Enter copies it.
+- Supports `+ - * / ^`, parentheses, decimals, `%`, `x% of y`, `sqrt abs round floor ceil min max sin cos tan log ln`, `pi` and `e`, and hex, binary and octal (`0xff`, `0b1010`, `to hex`, `to bin`, `to oct`, `to dec`).
+- Results use your region's number format, and copies leave out the thousands separators.
+- Plain words, a lone number, dividing by zero and other mistakes show no answer instead of an error. Calculations run in a small built-in parser, never as code. Turn it off in Settings.
+
+#### **The launcher searches the web, with bangs**
+- Text that isn't a tool ends the list with "Search DuckDuckGo for '…'" (matching tools stay above it). Enter opens the search in your browser.
+- DuckDuckGo-style bangs work anywhere in the text: `!g`, `!ddg`, `!b`, `!yt`, `!gh`, `!w`, `!r`, `!a`, `!maps`. A bang on its own opens the site's front page, and an unknown bang searches the default engine with your text as typed.
+- Settings: pick Google, Bing, DuckDuckGo, Brave, Startpage or your own search address with `{query}`, add, replace or remove bangs, restore the defaults, or turn web search off.
+- Pocketknife never contacts a search engine itself and fetches no suggestions. The query is percent-encoded, only http and https addresses open, and a custom address can't put your text into the site's name.
+
+#### **Choose your own launcher shortcut**
+- Settings → Quick launcher → Change… records the next key combination you press. Ctrl+Alt+Space stays the default, and Reset brings it back.
+- Shortcuts without Ctrl, Alt or Win, and ones Windows keeps for itself (Alt+Tab, Win+L, Ctrl+Shift+Esc and others), are refused with the reason.
+- Alt+Space, Win+Space, Ctrl+Space and other common shortcuts ask first. Alt+Space opens the window menu in every app and is PowerToys Run's default.
+- If another app already holds the shortcut you pick, the old one stays and Settings says why. If the saved shortcut is taken when Pocketknife starts, a notification says so, and the launcher is still in the notification-area menu.
+
+#### **Hand cursor on everything clickable**
+- Tool cards, sidebar items, launcher results, buttons, check boxes, drop-downs and Settings rows show the hand. Disabled controls keep the arrow, and text boxes keep the text cursor.
+
+#### **Fixes**
+- Starting with Windows (`--background`) no longer opens the main window: building the tool list used to select and open the first tool, which showed the window.
+- A copy of Pocketknife started with its own data folder (as tests do) is now a separate instance, so it never hands its command line to the copy you're using.
+
+## 0.1.0 (2026-10-22)
+
 #### **First release of Pocketknife, a PC multitool for Windows: 11 everyday tools that run on your PC**
 - **Video & Audio:** Download Video, Compress Video, Convert Video & Audio, Video to GIF.
 - **Images:** Remove Background.

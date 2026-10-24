@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows.Input;
 using System.Windows.Interop;
+using Pocketknife.Core.Launcher;
 
 namespace Pocketknife.App.Services;
 
@@ -14,6 +15,9 @@ public sealed partial class HotkeyService : IDisposable
     private readonly Action _pressed;
     private bool _registered;
 
+    /// <summary>The message-only window that receives WM_HOTKEY.</summary>
+    internal IntPtr Handle => _window.Handle;
+
     public HotkeyService(Action pressed)
     {
         _pressed = pressed;
@@ -21,59 +25,32 @@ public sealed partial class HotkeyService : IDisposable
         _window.AddHook(WndProc);
     }
 
-    public static IReadOnlyList<string> Choices { get; } = ["Ctrl+Alt+Space", "Ctrl+Shift+Space", "Alt+Shift+Space", "Ctrl+Alt+T", "Ctrl+Shift+K"];
-
-    /// <summary>Registers <paramref name="gesture"/> (for example "Ctrl+Alt+Space"), replacing any previous one.</summary>
-    public bool Register(string gesture)
+    /// <summary>Registers <paramref name="gesture"/>, replacing any previous one. False if Windows refused it.</summary>
+    public bool Register(HotkeyGesture gesture)
     {
         Unregister();
-        if (!TryParse(gesture, out var modifiers, out var key))
+        if (gesture.Key.All(char.IsAsciiDigit) || !Enum.TryParse<Key>(gesture.Key, ignoreCase: true, out var key) || key == Key.None)
         {
             return false;
         }
 
-        _registered = RegisterHotKey(_window.Handle, HotkeyId, modifiers | ModNoRepeat, (uint)KeyInterop.VirtualKeyFromKey(key));
+        _registered = RegisterHotKey(_window.Handle, HotkeyId, (uint)gesture.Modifiers | ModNoRepeat, (uint)KeyInterop.VirtualKeyFromKey(key));
         return _registered;
     }
 
-    public void Dispose()
-    {
-        Unregister();
-        _window.Dispose();
-    }
-
-    internal static bool TryParse(string gesture, out uint modifiers, out Key key)
-    {
-        modifiers = 0;
-        key = Key.None;
-        foreach (var part in gesture.Split('+', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
-        {
-            switch (part.ToUpperInvariant())
-            {
-                case "ALT": modifiers |= 0x1; break;
-                case "CTRL": modifiers |= 0x2; break;
-                case "SHIFT": modifiers |= 0x4; break;
-                case "WIN": modifiers |= 0x8; break;
-                default:
-                    if (!Enum.TryParse(part, ignoreCase: true, out key))
-                    {
-                        return false;
-                    }
-
-                    break;
-            }
-        }
-
-        return key != Key.None && modifiers != 0;
-    }
-
-    private void Unregister()
+    public void Unregister()
     {
         if (_registered)
         {
             UnregisterHotKey(_window.Handle, HotkeyId);
             _registered = false;
         }
+    }
+
+    public void Dispose()
+    {
+        Unregister();
+        _window.Dispose();
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

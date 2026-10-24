@@ -1,78 +1,51 @@
 ﻿<#
 .SYNOPSIS
-Drives the real app through UI Automation: opens every tool, runs it on the test fixtures, checks the result and
-saves a screenshot of each screen. Also presses the global launcher hotkey and checks the launcher appears.
+Checks a published Pocketknife.exe end to end, silently: runs every tool on the test fixtures, checks the launcher
+and the global hotkey, and checks the input files were not changed.
+
+.DESCRIPTION
+Safe to run while someone uses the PC. The app runs with POCKETKNIFE_HIDDEN=1, so its windows open off-screen
+without taking focus, a taskbar button or a tray icon. The script never moves focus and never sends keystrokes or
+mouse input: it fills fields and presses buttons through UI Automation patterns, opens tools with the app's
+--tool command line, and tests the hotkey with Ctrl+Alt+Shift+F24 (there is no F24 key on normal keyboards) by
+posting WM_HOTKEY to the app's own message window. Screenshots come from the headless app tests instead
+(set POCKETKNIFE_SCREENSHOTS when running tests/Pocketknife.App.Tests).
 
 .PARAMETER Exe
 Path to Pocketknife.exe.
 .PARAMETER Work
 Scratch folder, new or made by an earlier run of this script. Sample inputs go in Samples\, results in
 Downloads\Pocketknife\ and the app's data in data\, so your own settings and Downloads are untouched.
-.PARAMETER Screenshots
-Where to save PNG screenshots.
 .PARAMETER EngineCache
 Optional engines folder to copy in first (for example the test cache), so only missing engines download.
 #>
 param(
     [Parameter(Mandatory)][string]$Exe,
     [Parameter(Mandatory)][string]$Work,
-    [Parameter(Mandatory)][string]$Screenshots,
     [string]$EngineCache,
     [ValidateSet("System", "Light", "Dark")][string]$Theme = "Light",
     [string]$VideoUrl = "https://www.youtube.com/watch?v=jNQXAC9IVRw"
 )
 
 $ErrorActionPreference = "Stop"
-Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Drawing, System.Windows.Forms
+Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
 Add-Type @"
 using System;
-using System.Drawing;
 using System.Runtime.InteropServices;
-public static class Native {
-    [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
-    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hwnd);
-    [DllImport("user32.dll")] public static extern bool SetProcessDpiAwarenessContext(IntPtr value);
-    [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr hwnd);
-    [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr hwnd, int attribute, out RECT rect, int size);
-    [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
-    // inset trims a window's transparent margin (the launcher draws its card 16 px inside its window).
-    public static Bitmap Capture(IntPtr hwnd, int inset, int radius) {
-        SetForegroundWindow(hwnd);
-        System.Threading.Thread.Sleep(400);
-        RECT r; DwmGetWindowAttribute(hwnd, 9, out r, Marshal.SizeOf(typeof(RECT)));
-        double scale = GetDpiForWindow(hwnd) / 96.0;
-        inset = (int)Math.Round(inset * scale);
-        radius = (int)Math.Round(radius * scale);
-        var bmp = new Bitmap(r.Right - r.Left - 2 * inset, r.Bottom - r.Top - 2 * inset);
-        using (var g = Graphics.FromImage(bmp)) { g.CopyFromScreen(r.Left + inset, r.Top + inset, 0, 0, bmp.Size); }
-        RoundCorners(bmp, radius);
-        return bmp;
-    }
-    // Windows 11 windows have rounded corners; make the pixels outside them transparent (antialiased).
-    static void RoundCorners(Bitmap bmp, int radius) {
-        for (int y = 0; y < radius; y++)
-        for (int x = 0; x < radius; x++) {
-            double dx = radius - x - 0.5, dy = radius - y - 0.5;
-            double coverage = Math.Max(0, Math.Min(1, radius - Math.Sqrt(dx * dx + dy * dy) + 0.5));
-            foreach (var p in new[] { new Point(x, y), new Point(bmp.Width - 1 - x, y), new Point(x, bmp.Height - 1 - y), new Point(bmp.Width - 1 - x, bmp.Height - 1 - y) }) {
-                var c = bmp.GetPixel(p.X, p.Y);
-                bmp.SetPixel(p.X, p.Y, Color.FromArgb((int)Math.Round(c.A * coverage), c.R, c.G, c.B));
-            }
-        }
-    }
-    public static void Chord(byte[] keys) {
-        foreach (var k in keys) keybd_event(k, 0, 0, UIntPtr.Zero);
-        Array.Reverse(keys);
-        foreach (var k in keys) keybd_event(k, 0, 2, UIntPtr.Zero);
-    }
+public static class SmokeNative {
+    [DllImport("user32.dll", SetLastError = true)] public static extern bool RegisterHotKey(IntPtr hwnd, int id, uint modifiers, uint key);
+    [DllImport("user32.dll")] public static extern bool UnregisterHotKey(IntPtr hwnd, int id);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr FindWindowEx(IntPtr parent, IntPtr after, string cls, string title);
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
+    [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
 }
-"@ -ReferencedAssemblies System.Drawing
-[Native]::SetProcessDpiAwarenessContext([IntPtr]-4) | Out-Null
+"@
 
 $A = [System.Windows.Automation.AutomationElement]
 $Tree = [System.Windows.Automation.TreeScope]
 function Cond($property, $value) { New-Object System.Windows.Automation.PropertyCondition($property, $value) }
 
+$hotkey = "Ctrl+Alt+Shift+F24"
 $Work = [IO.Path]::GetFullPath($Work)
 $data = Join-Path $Work "data"
 $outputs = Join-Path $Work "Downloads\Pocketknife"
@@ -80,29 +53,19 @@ $inputs = Join-Path $Work "Samples"
 $marker = Join-Path $Work ".pocketknife-smoke"
 if ((Test-Path $Work) -and -not (Test-Path $marker)) { throw "$Work exists and was not created by this script. Choose a new folder." }
 Remove-Item $Work -Recurse -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Force $data, $outputs, $inputs, $Screenshots | Out-Null
+New-Item -ItemType Directory -Force $data, $outputs, $inputs | Out-Null
 New-Item -ItemType File $marker | Out-Null
 $fixtures = Join-Path $PSScriptRoot "..\tests\Pocketknife.Tests\Fixtures"
 $samples = @{ "sample.mp4" = "holiday-clip.mp4"; "sample.pdf" = "invoice.pdf"; "speech.mp3" = "voice-note.mp3"; "subject.png" = "product-photo.png" }
 foreach ($name in $samples.Keys) { Copy-Item (Join-Path $fixtures $name) (Join-Path $inputs $samples[$name]) }
 Copy-Item (Join-Path $inputs "invoice.pdf") (Join-Path $inputs "receipt.pdf")
 if ($EngineCache) { Copy-Item $EngineCache (Join-Path $data "engines") -Recurse }
-@{ OutputRoot = $outputs; Theme = $Theme; KeepRunningInTray = $true; LauncherHotkey = "Ctrl+Alt+Space" } |
+@{ OutputRoot = $outputs; Theme = $Theme; KeepRunningInTray = $true; LauncherHotkey = $hotkey } |
     ConvertTo-Json | Set-Content -Encoding utf8 (Join-Path $data "settings.json")
 $before = Get-ChildItem $inputs | ForEach-Object { "$($_.Name)=$((Get-FileHash $_.FullName).Hash)" }
 
-# A plain backdrop behind the app, so the translucent window border and rounded corners never pick up
-# other windows or the desktop in the screenshots.
-$backdrop = New-Object System.Windows.Forms.Form
-$backdrop.FormBorderStyle = "None"
-$backdrop.ShowInTaskbar = $false
-$backdrop.StartPosition = "Manual"
-$backdrop.Bounds = [System.Windows.Forms.SystemInformation]::VirtualScreen
-$backdrop.BackColor = if ($Theme -eq "Dark") { [System.Drawing.Color]::FromArgb(32, 32, 32) } else { [System.Drawing.Color]::FromArgb(243, 243, 243) }
-$backdrop.Show()
-[System.Windows.Forms.Application]::DoEvents()
-
 $env:POCKETKNIFE_DATA = $data
+$env:POCKETKNIFE_HIDDEN = "1"
 $process = Start-Process $Exe -PassThru
 
 function Wait-For([scriptblock]$probe, [int]$seconds = 30, [string]$what = "condition") {
@@ -110,7 +73,6 @@ function Wait-For([scriptblock]$probe, [int]$seconds = 30, [string]$what = "cond
     while ((Get-Date) -lt $deadline) {
         $value = & $probe
         if ($value) { return $value }
-        [System.Windows.Forms.Application]::DoEvents()
         Start-Sleep -Milliseconds 250
     }
     throw "Timed out waiting for $what"
@@ -125,23 +87,6 @@ function Get-Window([string]$name) {
 
 function Find([System.Windows.Automation.AutomationElement]$root, $property, $value, [int]$seconds = 10) {
     Wait-For { $root.FindFirst($Tree::Descendants, (Cond $property $value)) } $seconds "element $value"
-}
-
-function Save-Shot($element, [string]$name, [int]$inset = 0, [int]$radius = 8) {
-    [System.Windows.Forms.Application]::DoEvents()
-    Start-Sleep -Milliseconds 600
-    $bitmap = [Native]::Capture([IntPtr]$element.Current.NativeWindowHandle, $inset, $radius)
-    $bitmap.Save((Join-Path $Screenshots "$name.png"), [System.Drawing.Imaging.ImageFormat]::Png)
-    $bitmap.Dispose()
-    Write-Host "  screenshot $name.png"
-}
-
-function Open-Tool([string]$id, [string[]]$paths) {
-    Start-Process $Exe -ArgumentList (@("--tool", $id) + ($paths | ForEach-Object { "`"$_`"" })) -Wait
-    Start-Sleep -Milliseconds 800
-    $window = Get-Window "Pocketknife"
-    Wait-For { $window.FindFirst($Tree::Descendants, (Cond $A::AutomationIdProperty "RunButton")) } 10 "tool page $id" | Out-Null
-    return $window
 }
 
 function Find-Control($window, $property, [string]$value, $type) {
@@ -161,6 +106,21 @@ function Set-Toggle($window, [string]$name) {
     $box.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern).Toggle()
 }
 
+function Launcher-Rows($launcher) {
+    Start-Sleep -Milliseconds 300
+    $list = Find $launcher $A::AutomationIdProperty "LauncherResults"
+    @($list.FindAll($Tree::Children, (Cond $A::ControlTypeProperty ([System.Windows.Automation.ControlType]::ListItem))) | ForEach-Object { $_.Current.Name })
+}
+
+# Opens a tool by handing --tool to the running copy (the second process has no window and exits at once).
+function Open-Tool([string]$id, [string[]]$paths) {
+    Start-Process $Exe -ArgumentList (@("--tool", $id) + ($paths | ForEach-Object { "`"$_`"" })) -Wait
+    Start-Sleep -Milliseconds 800
+    $window = Get-Window "Pocketknife"
+    Wait-For { $window.FindFirst($Tree::Descendants, (Cond $A::AutomationIdProperty "RunButton")) } 10 "tool page $id" | Out-Null
+    return $window
+}
+
 function Run-Tool($window, [int]$seconds = 300) {
     (Find $window $A::AutomationIdProperty "RunButton").GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
     $status = Find $window $A::AutomationIdProperty "StatusText"
@@ -172,80 +132,97 @@ function Run-Tool($window, [int]$seconds = 300) {
     return @{ Status = $status.Current.Name; Summary = if ($summary) { $summary.Current.Name } else { "" } }
 }
 
-$results = [ordered]@{}
-function Check-Run([string]$id, $window, [hashtable]$result, [string]$shot) {
-    Save-Shot $window $shot
-    $ok = $result.Status -eq "Done"
-    $results[$id] = "$($result.Status) | $($result.Summary)"
-    Write-Host ("{0,-20} {1}" -f $id, $results[$id])
-    if (-not $ok) { throw "$id did not finish cleanly: $($result.Status)" }
+function Check-Run([string]$id, [hashtable]$result) {
+    Write-Host ("{0,-20} {1} | {2}" -f $id, $result.Status, $result.Summary)
+    if ($result.Status -ne "Done") { throw "$id did not finish cleanly: $($result.Status)" }
+}
+
+function Expect-Rows($launcher, [string]$query, [scriptblock]$check, [string]$what) {
+    Set-Text $launcher $A::AutomationIdProperty "LauncherQuery" $query
+    $rows = Launcher-Rows $launcher
+    if (-not (& $check $rows)) { throw "Launcher '$query': expected $what, got '$($rows -join " | ")'" }
+    Write-Host ("launcher {0,-16} {1}" -f "'$query'", ($rows -join " | "))
 }
 
 try {
-    $main = Get-Window "Pocketknife"
-    Save-Shot $main "01-home"
+    Get-Window "Pocketknife" | Out-Null
 
-    [Native]::Chord(@(0x11, 0x12, 0x20))
+    # The app holds the hotkey: Windows refuses to give the same shortcut to anyone else (ERROR_HOTKEY_ALREADY_REGISTERED).
+    if ([SmokeNative]::RegisterHotKey([IntPtr]::Zero, 0x7151, 0x2 -bor 0x1 -bor 0x4 -bor 0x4000, 0x87)) {
+        [SmokeNative]::UnregisterHotKey([IntPtr]::Zero, 0x7151) | Out-Null
+        throw "$hotkey was free, so the app didn't register it."
+    }
+    if ([Runtime.InteropServices.Marshal]::GetLastWin32Error() -ne 1409) { throw "Unexpected RegisterHotKey error $([Runtime.InteropServices.Marshal]::GetLastWin32Error())." }
+
+    # Simulate the key press by delivering WM_HOTKEY to the app's own message window: no real keystrokes.
+    $hotkeyWindow = [IntPtr]::Zero
+    do {
+        $hotkeyWindow = [SmokeNative]::FindWindowEx([IntPtr]-3, $hotkeyWindow, [NullString]::Value, "PocketknifeHotkey")
+        $owner = 0
+        if ($hotkeyWindow -ne [IntPtr]::Zero) { [SmokeNative]::GetWindowThreadProcessId($hotkeyWindow, [ref]$owner) | Out-Null }
+    } until ($hotkeyWindow -eq [IntPtr]::Zero -or $owner -eq $process.Id)
+    if ($hotkeyWindow -eq [IntPtr]::Zero) { throw "The app's hotkey window was not found." }
+    [SmokeNative]::PostMessage($hotkeyWindow, 0x0312, [IntPtr]0x5442, [IntPtr]::Zero) | Out-Null
     $launcher = Get-Window "Find a tool"
-    Set-Text $launcher $A::AutomationIdProperty "LauncherQuery" "gif"
-    Save-Shot $launcher "02-launcher" 17 9
-    $first = (Find $launcher $A::AutomationIdProperty "LauncherResults").FindFirst($Tree::Children, (Cond $A::ControlTypeProperty ([System.Windows.Automation.ControlType]::ListItem)))
-    if ($first.Current.Name -ne "Video to GIF") { throw "Launcher's first result was '$($first.Current.Name)'" }
-    Write-Host "launcher hotkey      opened, 'gif' -> Video to GIF"
-    [Native]::Chord(@(0x1B))
+    Write-Host "launcher hotkey      $hotkey registered; WM_HOTKEY opened the launcher"
+
+    Expect-Rows $launcher "gif" { param($r) $r[0] -eq "Video to GIF" -and $r[-1] -eq "Search DuckDuckGo for 'gif'" } "Video to GIF first and the web search last"
+    Expect-Rows $launcher "12*(3+4)" { param($r) $r[0] -eq "= 84" } "the calculation first"
+    Expect-Rows $launcher "!yt lofi beats" { param($r) ($r -join "|") -eq "Search YouTube for 'lofi beats'" } "only the YouTube search"
+    Expect-Rows $launcher "zzqx weather" { param($r) ($r -join "|") -eq "Search DuckDuckGo for 'zzqx weather'" } "only the default web search"
 
     $w = Open-Tool "compress-video" @("$inputs\holiday-clip.mp4")
-    Check-Run "compress-video" $w (Run-Tool $w) "10-compress-video"
+    Check-Run "compress-video" (Run-Tool $w)
 
     $w = Open-Tool "convert-media" @("$inputs\holiday-clip.mp4")
-    Check-Run "convert-media" $w (Run-Tool $w) "11-convert-media"
+    Check-Run "convert-media" (Run-Tool $w)
 
     $w = Open-Tool "video-to-gif" @("$inputs\holiday-clip.mp4")
-    Check-Run "video-to-gif" $w (Run-Tool $w) "12-video-to-gif"
+    Check-Run "video-to-gif" (Run-Tool $w)
 
     $w = Open-Tool "download-video" @()
     Set-Text $w $A::AutomationIdProperty "TextInput" $VideoUrl
-    Check-Run "download-video" $w (Run-Tool $w) "13-download-video"
+    Check-Run "download-video" (Run-Tool $w)
 
     $w = Open-Tool "remove-background" @("$inputs\product-photo.png")
-    Check-Run "remove-background" $w (Run-Tool $w) "14-remove-background"
+    Check-Run "remove-background" (Run-Tool $w)
 
     $w = Open-Tool "merge-pdfs" @("$inputs\invoice.pdf", "$inputs\receipt.pdf")
-    Check-Run "merge-pdfs" $w (Run-Tool $w) "15-merge-pdfs"
+    Check-Run "merge-pdfs" (Run-Tool $w)
 
     $w = Open-Tool "split-pdf" @("$inputs\invoice.pdf")
-    Check-Run "split-pdf" $w (Run-Tool $w) "16-split-pdf"
+    Check-Run "split-pdf" (Run-Tool $w)
 
     $w = Open-Tool "redact-pdf" @("$inputs\invoice.pdf")
     Set-Text $w $A::NameProperty "Words or phrases to redact" "Jane Doe`r`n4111-2222-3333"
     Set-Toggle $w "Redact email addresses"
     Set-Toggle $w "Redact phone numbers"
-    Check-Run "redact-pdf" $w (Run-Tool $w) "17-redact-pdf"
+    Check-Run "redact-pdf" (Run-Tool $w)
 
     $w = Open-Tool "transcribe" @("$inputs\voice-note.mp3")
-    Save-Shot $w "18-transcribe-before"
-    Check-Run "transcribe" $w (Run-Tool $w 900) "18-transcribe"
+    Check-Run "transcribe" (Run-Tool $w 900)
 
     $w = Open-Tool "make-qr-code" @()
     Set-Text $w $A::AutomationIdProperty "TextInput" "https://github.com/kenhendricks00/Pocketknife"
-    Check-Run "make-qr-code" $w (Run-Tool $w) "19-make-qr-code"
+    Check-Run "make-qr-code" (Run-Tool $w)
 
     $qr = Get-ChildItem $outputs -Recurse -Filter "QR code.png" | Select-Object -First 1
     $w = Open-Tool "read-qr-code" @($qr.FullName)
-    Check-Run "read-qr-code" $w (Run-Tool $w) "20-read-qr-code"
+    Check-Run "read-qr-code" (Run-Tool $w)
     $decoded = (Find $w $A::AutomationIdProperty "Messages").GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
     if ($decoded -ne "https://github.com/kenhendricks00/Pocketknife") { throw "QR read back '$decoded'" }
-
-    (Find $main $A::AutomationIdProperty "SettingsButton").GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
-    Save-Shot $main "30-settings"
 }
 finally {
     Stop-Process -Id $process.Id -ErrorAction SilentlyContinue
     # Wait until it is gone, so a following run doesn't race this one for the single-instance pipe and the hotkey.
     Wait-Process -Id $process.Id -Timeout 15 -ErrorAction SilentlyContinue
-    $backdrop.Close()
-    Remove-Item Env:\POCKETKNIFE_DATA
+    Remove-Item Env:\POCKETKNIFE_DATA, Env:\POCKETKNIFE_HIDDEN -ErrorAction SilentlyContinue
 }
+
+# Leave nothing running: every copy of this exe (the app and any --tool hand-off) must be gone.
+$exePath = (Resolve-Path $Exe).Path
+$left = Wait-For { $running = @(Get-CimInstance Win32_Process -Filter "Name='$(Split-Path $exePath -Leaf)'" | Where-Object ExecutablePath -eq $exePath); if ($running.Count -eq 0) { "none" } } 20 "the app to exit"
+Write-Host "app processes left   $left"
 
 $after = Get-ChildItem $inputs | ForEach-Object { "$($_.Name)=$((Get-FileHash $_.FullName).Hash)" }
 if (Compare-Object $before $after) { throw "Input files changed!" }

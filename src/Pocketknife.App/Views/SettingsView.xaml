@@ -36,11 +36,104 @@
                     <TextBlock Text="Quick launcher" Style="{DynamicResource BodyStrongTextBlockStyle}" />
                     <TextBlock Style="{StaticResource Secondary}" Margin="0,4,0,10" Text="Press the shortcut anywhere in Windows, type a few letters and press Enter." />
                     <StackPanel Orientation="Horizontal">
-                        <ComboBox x:Name="HotkeyBox" Width="240" SelectionChanged="OnHotkeyChanged" AutomationProperties.Name="Launcher shortcut" />
-                        <TextBlock x:Name="HotkeyWarning" Foreground="{DynamicResource SystemFillColorCriticalBrush}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <TextBox x:Name="HotkeyCapture" Width="240" IsReadOnly="True" IsReadOnlyCaretVisible="False" Cursor="Arrow"
+                                 PreviewKeyDown="OnHotkeyKeyDown" LostKeyboardFocus="OnHotkeyCaptureLost"
+                                 AutomationProperties.Name="Launcher shortcut" AutomationProperties.AutomationId="HotkeyCapture" />
+                        <Button Content="Change…" Click="OnChangeHotkey" Margin="8,0,0,0" AutomationProperties.AutomationId="ChangeHotkey" />
+                        <Button Content="Reset" Click="OnResetHotkey" Margin="8,0,0,0" AutomationProperties.AutomationId="ResetHotkey" />
+                    </StackPanel>
+                    <TextBlock x:Name="HotkeyMessage" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.AutomationId="HotkeyMessage"
+                               Visibility="{Binding Text, RelativeSource={RelativeSource Self}, Converter={StaticResource VisibleWhenSet}}" />
+                    <StackPanel x:Name="HotkeyConfirm" Orientation="Horizontal" Margin="0,8,0,0" Visibility="Collapsed">
+                        <Button Content="Use it anyway" Click="OnUseHotkeyAnyway" AutomationProperties.AutomationId="UseHotkeyAnyway" />
+                        <Button Content="Keep current" Click="OnKeepHotkey" Margin="8,0,0,0" AutomationProperties.AutomationId="KeepHotkey" />
                     </StackPanel>
                     <CheckBox x:Name="TrayBox" Content="Keep running in the notification area when the window is closed" Margin="0,14,0,0" Click="OnTrayChanged" />
                     <CheckBox x:Name="StartupBox" Content="Start with Windows (in the notification area)" Margin="0,8,0,0" Click="OnStartupChanged" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Web search" Style="{DynamicResource BodyStrongTextBlockStyle}" />
+                    <TextBlock Style="{StaticResource Secondary}" Margin="0,4,0,10"
+                               Text="When the launcher text isn't a tool, press Enter to search the web in your browser. Pocketknife never sends what you type anywhere itself; your browser opens the search page." />
+                    <CheckBox x:Name="WebEnabledBox" Content="Search the web from the launcher" Click="OnWebEnabledChanged" AutomationProperties.AutomationId="WebEnabled" />
+                    <StackPanel x:Name="WebOptions" Margin="0,14,0,0">
+                        <TextBlock Text="Default search engine" Margin="0,0,0,6" />
+                        <ComboBox x:Name="EngineBox" Width="240" HorizontalAlignment="Left" SelectionChanged="OnEngineChanged"
+                                  AutomationProperties.Name="Default search engine" />
+                        <StackPanel x:Name="CustomEnginePanel" Margin="0,10,0,0" Visibility="Collapsed">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="Use" Click="OnUseCustomEngine" Margin="8,0,0,0" />
+                                <Grid>
+                                    <TextBox x:Name="CustomTemplateBox" AutomationProperties.Name="Custom search address" />
+                                    <TextBlock Text="https://example.com/search?q={query}" IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                               Visibility="{Binding Text, ElementName=CustomTemplateBox, Converter={StaticResource VisibleWhenEmpty}}" />
+                                </Grid>
+                            </DockPanel>
+                            <TextBlock x:Name="CustomEngineMessage" TextWrapping="Wrap" Margin="0,6,0,0"
+                                       Visibility="{Binding Text, RelativeSource={RelativeSource Self}, Converter={StaticResource VisibleWhenSet}}" />
+                        </StackPanel>
+
+                        <TextBlock Text="Bangs" Style="{DynamicResource BodyStrongTextBlockStyle}" Margin="0,18,0,0" />
+                        <TextBlock Style="{StaticResource Secondary}" Margin="0,4,0,8"
+                                   Text="Type a bang anywhere in the launcher, like !yt lofi beats, to search that site. A bang on its own opens the site." />
+                        <ItemsControl x:Name="BangList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,3">
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE711;" ToolTip="Remove"
+                                                Click="OnRemoveBang" Tag="{Binding Trigger}" AutomationProperties.Name="Remove bang" />
+                                        <TextBlock Width="80" FontWeight="SemiBold" VerticalAlignment="Center">
+                                            <Run Text="!" /><Run Text="{Binding Trigger, Mode=OneWay}" />
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding Name}" Width="130" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Template}" Style="{StaticResource Secondary}" FontSize="12" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip="{Binding Template}" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0" Margin="0,0,6,0">
+                                <TextBox x:Name="NewBangTrigger" AutomationProperties.Name="New bang shortcut" />
+                                <TextBlock Text="!mdn" IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                           Visibility="{Binding Text, ElementName=NewBangTrigger, Converter={StaticResource VisibleWhenEmpty}}" />
+                            </Grid>
+                            <Grid Grid.Column="1" Margin="0,0,6,0">
+                                <TextBox x:Name="NewBangName" AutomationProperties.Name="New bang site name" />
+                                <TextBlock Text="MDN" IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                           Visibility="{Binding Text, ElementName=NewBangName, Converter={StaticResource VisibleWhenEmpty}}" />
+                            </Grid>
+                            <Grid Grid.Column="2">
+                                <TextBox x:Name="NewBangTemplate" AutomationProperties.Name="New bang search address" />
+                                <TextBlock Text="https://developer.mozilla.org/search?q={query}" IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                           Visibility="{Binding Text, ElementName=NewBangTemplate, Converter={StaticResource VisibleWhenEmpty}}" />
+                            </Grid>
+                            <Button Grid.Column="3" Content="Add" Click="OnAddBang" Margin="8,0,0,0" />
+                        </Grid>
+                        <TextBlock x:Name="BangMessage" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   Visibility="{Binding Text, RelativeSource={RelativeSource Self}, Converter={StaticResource VisibleWhenSet}}" />
+                        <Button Content="Restore default bangs" Click="OnRestoreBangs" Margin="0,10,0,0" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Calculator" Style="{DynamicResource BodyStrongTextBlockStyle}" />
+                    <TextBlock Style="{StaticResource Secondary}" Margin="0,4,0,10"
+                               Text="Type math such as 12*(3+4), 15% of 80, sqrt(2) or 255 to hex into the launcher. The answer appears as you type, and Enter copies it." />
+                    <CheckBox x:Name="CalculatorBox" Content="Show calculator results in the launcher" Click="OnCalculatorChanged" AutomationProperties.AutomationId="CalculatorEnabled" />
                 </StackPanel>
             </Border>
 

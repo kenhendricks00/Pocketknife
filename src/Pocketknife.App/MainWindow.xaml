@@ -43,7 +43,7 @@
                     </Button>
                 </StackPanel>
 
-                <ListBox x:Name="ToolList" SelectionChanged="OnToolSelected" BorderThickness="0" Background="Transparent"
+                <ListBox x:Name="ToolList" SelectionChanged="OnToolSelected" IsSynchronizedWithCurrentItem="False" BorderThickness="0" Background="Transparent"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.AutomationId="ToolList">
                     <ListBox.GroupStyle>
                         <GroupStyle>

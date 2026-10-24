@@ -12,14 +12,17 @@ namespace Pocketknife.App;
 public partial class MainWindow : Window
 {
     private readonly AppServices _services;
+    private readonly LauncherHotkey _hotkey;
     private readonly Dictionary<string, ToolView> _toolViews = [];
     private readonly ListCollectionView _tools;
     private bool _navigating;
 
-    public MainWindow(AppServices services)
+    public MainWindow(AppServices services, LauncherHotkey hotkey)
     {
         _services = services;
+        _hotkey = hotkey;
         InitializeComponent();
+        HiddenMode.Prepare(this);
         _tools = new ListCollectionView(ToolRegistry.All.ToList());
         _tools.GroupDescriptions.Add(new PropertyGroupDescription(nameof(Tool.Category), new CategoryNameConverter()));
         ToolList.ItemsSource = _tools;
@@ -33,11 +36,15 @@ public partial class MainWindow : Window
 
     public ICommand FocusSearchCommand { get; }
 
-    public bool HotkeyRegistered { get; set; }
 
     public void Summon()
     {
         Show();
+        if (HiddenMode.IsOn)
+        {
+            return;
+        }
+
         if (WindowState == WindowState.Minimized)
         {
             WindowState = WindowState.Normal;
@@ -84,7 +91,7 @@ public partial class MainWindow : Window
 
     private void OpenSettings()
     {
-        Page.Content = new SettingsView(_services, () => HotkeyRegistered);
+        Page.Content = new SettingsView(_services, _hotkey);
         ToolList.SelectedItem = null;
     }
 

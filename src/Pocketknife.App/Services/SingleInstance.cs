@@ -1,13 +1,17 @@
 using System.IO.Pipes;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
+using Pocketknife.Core.Settings;
 
 namespace Pocketknife.App.Services;
 
-/// <summary>Keeps one running copy per user. Later launches hand their command line to it over a named pipe.</summary>
+/// <summary>Keeps one running copy per user and data folder. Later launches hand their command line to it over a named pipe.</summary>
 public sealed partial class SingleInstance : IDisposable
 {
-    private static readonly string s_name = $"Pocketknife-{Environment.UserName}";
+    // One copy per user and data folder: a copy started with its own POCKETKNIFE_DATA (tests, smoke runs) never
+    // hands its command line to the copy someone is using.
+    private static readonly string s_name = $"Pocketknife-{Environment.UserName}-{DataFolderId()}";
     private readonly Mutex _mutex;
     private readonly CancellationTokenSource _stop = new();
 
@@ -58,6 +62,9 @@ public sealed partial class SingleInstance : IDisposable
             }
         }
     });
+
+    private static string DataFolderId() =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Path.GetFullPath(AppPaths.DataRoot).ToUpperInvariant())))[..12];
 
     public void Dispose()
     {

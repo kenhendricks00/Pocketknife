@@ -18,7 +18,7 @@
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" Panel.ZIndex="1" />
                 <TextBox x:Name="Query" FontSize="18" Padding="40,8,8,8" TextChanged="OnQueryChanged" AutomationProperties.AutomationId="LauncherQuery"
                          AutomationProperties.Name="Find a tool" />
-                <TextBlock Text="Type to find a tool…" IsHitTestVisible="False" FontSize="18" Margin="42,0,0,0" VerticalAlignment="Center"
+                <TextBlock Text="Find a tool, calculate, or search the web…" IsHitTestVisible="False" FontSize="18" Margin="42,0,0,0" VerticalAlignment="Center"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                            Visibility="{Binding Text, ElementName=Query, Converter={StaticResource VisibleWhenEmpty}}" />
             </Grid>

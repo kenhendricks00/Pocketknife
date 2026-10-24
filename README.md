@@ -21,7 +21,7 @@
 Open a tool, drop in a file or a whole folder, pick the few settings that tool needs, and press <code>Start</code>. Results go to a **new dated folder** in <code>Downloads\Pocketknife</code>, for example <code>2026-10-22 14.05.31 Compress Video</code>. Your original files are never changed and nothing is ever overwritten.
 
 > [!TIP]
-> Press <code>Ctrl+Alt+Space</code> anywhere in Windows, type a few letters (<code>gif</code>, <code>redact</code>, <code>qr</code>…) and press <code>Enter</code> to jump straight to a tool. The shortcut can be changed in Settings.
+> Press <code>Ctrl+Alt+Space</code> anywhere in Windows, type a few letters (<code>gif</code>, <code>redact</code>, <code>qr</code>…) and press <code>Enter</code> to jump straight to a tool. The same box does math (<code>15% of 80</code>), searches the web, and takes bangs like <code>!yt lofi beats</code>. The shortcut can be changed in Settings.
 
 <p align="center">
 <img src="assets/screenshots/launcher.png" width="520" alt="The quick launcher">
@@ -58,6 +58,15 @@ Every tool that takes files also takes a folder. All of its matching files are p
 1. **Quick launcher**:
     - <code>Ctrl+Alt+Space</code> from any app, type to filter, <code>Enter</code> to open.
     - Search understands names, initials (<code>cv</code> → Compress Video) and keywords (<code>youtube</code>, <code>subtitles</code>, <code>black out</code>).
+    - **Calculator**: math such as <code>12*(3+4)</code>, <code>200 + 10%</code>, <code>15% of 80</code>, <code>sqrt(2)</code>, <code>round(pi, 3)</code> or <code>255 to hex</code> shows the answer as you type; <code>Enter</code> copies it.
+    - **Web search**: text that isn't a tool can be searched on DuckDuckGo, Google, Bing, Brave, Startpage or your own search address. DuckDuckGo-style bangs such as <code>!yt</code>, <code>!gh</code>, <code>!w</code> or <code>!maps</code> go straight to a site, and you can add your own.
+    - **Your shortcut**: pick any key combination in Settings. Pocketknife refuses ones Windows keeps for itself and warns about ones other apps use, such as <code>Alt+Space</code> (the window menu, and PowerToys Run's default).
+
+<p align="center">
+<img src="assets/screenshots/launcher-calculator.png" width="49%" alt="The launcher calculating 12*(3+4)">
+<img src="assets/screenshots/launcher-bang.png" width="49%" alt="The launcher with the !yt bang">
+</p>
+
 2. **Batch processing**:
     - Drop files or folders onto any tool, or choose them with the file and folder pickers.
     - Merge PDFs lets you reorder files before merging.
@@ -90,8 +99,9 @@ Every tool that takes files also takes a folder. All of its matching files are p
 </p>
 
 # 🔒 Privacy
-Pocketknife never sends your files anywhere. It only uses the network for two things:
+Pocketknife never sends your files anywhere. It only uses the network for these things:
 - **Download Video** fetches the links you paste.
+- **Web search** in the launcher opens the search page in your browser when you press <code>Enter</code>. Pocketknife itself sends nothing, and there are no search suggestions.
 - **First use of an engine** downloads it from the pinned release listed below. You can skip this by pointing Settings at your own copy.
 
 There is no telemetry, no crash reporting and no update check.
@@ -118,13 +128,14 @@ You need the [.NET 10 SDK](https://dotnet.microsoft.com/download). [Inno Setup 6
 
 ```powershell
 dotnet build Pocketknife.slnx
-dotnet test --project tests/Pocketknife.Tests   # downloads the engines once into %LOCALAPPDATA%\Pocketknife-tests
+dotnet test --project tests/Pocketknife.Tests       # downloads the engines once into %LOCALAPPDATA%\Pocketknife-tests
+dotnet test --project tests/Pocketknife.App.Tests   # screens, launcher and settings, rendered off-screen
 dotnet format Pocketknife.slnx --verify-no-changes
-./scripts/package.ps1                          # release/ portable zip, installer and SHA256SUMS.txt
-./scripts/ui-smoke.ps1 -Exe artifacts/publish/Pocketknife.exe -Work $env:TEMP/pocketknife-smoke -Screenshots $env:TEMP/pocketknife-shots
+./scripts/package.ps1                              # release/ portable zip, installer and SHA256SUMS.txt
+./scripts/ui-smoke.ps1 -Exe artifacts/publish/Pocketknife.exe -Work $env:TEMP/pocketknife-smoke
 ```
 
-<code>ui-smoke.ps1</code> drives the real app through UI Automation, runs every tool on the test fixtures, presses the launcher hotkey and checks that the input files were not changed.
+All of these run silently, so you can keep working while they run. The app tests never show a window: they lay screens out off-screen and render them with <code>RenderTargetBitmap</code> (set <code>POCKETKNIFE_SCREENSHOTS</code> to a folder to keep the images). <code>ui-smoke.ps1</code> checks a published build end to end with the app in hidden mode (<code>POCKETKNIFE_HIDDEN=1</code>: windows off-screen, no focus, no tray icon). It drives it only through UI Automation, runs every tool on the test fixtures, checks the launcher and its hotkey without pressing keys, and checks that the input files were not changed.
 
 **Adding a tool** means writing one class that derives from <code>Tool</code> (see <code>src/Pocketknife.Core/Tools</code>) and listing it in <code>ToolRegistry</code>. The class declares its input, its settings and the engines it needs, and the app builds its screen from that.
 

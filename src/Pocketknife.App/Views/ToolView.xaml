@@ -145,7 +145,7 @@
             </Border>
 
             <DockPanel Margin="0,6,0,0">
-                <Button DockPanel.Dock="Left" Command="{Binding RunCommand}" Style="{DynamicResource AccentButtonStyle}" MinWidth="120" Padding="20,7"
+                <Button DockPanel.Dock="Left" Command="{Binding RunCommand}" Style="{StaticResource AccentButton}" MinWidth="120" Padding="20,7"
                         AutomationProperties.AutomationId="RunButton" AutomationProperties.Name="Start">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Style="{StaticResource Icon}" Text="&#xE768;" Margin="0,0,8,0" />
