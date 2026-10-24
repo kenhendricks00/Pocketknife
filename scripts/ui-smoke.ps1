@@ -66,7 +66,7 @@ $before = Get-ChildItem $inputs | ForEach-Object { "$($_.Name)=$((Get-FileHash $
 
 $env:POCKETKNIFE_DATA = $data
 $env:POCKETKNIFE_HIDDEN = "1"
-$process = Start-Process $Exe -PassThru
+$process = Start-Process $Exe -PassThru -WindowStyle Hidden
 
 function Wait-For([scriptblock]$probe, [int]$seconds = 30, [string]$what = "condition") {
     $deadline = (Get-Date).AddSeconds($seconds)
@@ -114,7 +114,7 @@ function Launcher-Rows($launcher) {
 
 # Opens a tool by handing --tool to the running copy (the second process has no window and exits at once).
 function Open-Tool([string]$id, [string[]]$paths) {
-    Start-Process $Exe -ArgumentList (@("--tool", $id) + ($paths | ForEach-Object { "`"$_`"" })) -Wait
+    Start-Process $Exe -ArgumentList (@("--tool", $id) + ($paths | ForEach-Object { "`"$_`"" })) -Wait -WindowStyle Hidden
     Start-Sleep -Milliseconds 800
     $window = Get-Window "Pocketknife"
     Wait-For { $window.FindFirst($Tree::Descendants, (Cond $A::AutomationIdProperty "RunButton")) } 10 "tool page $id" | Out-Null

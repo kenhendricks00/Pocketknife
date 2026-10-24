@@ -1,4 +1,4 @@
-## 0.2.0 (Unreleased)
+## 0.2.0 (2026-10-24)
 
 #### **The launcher does math**
 - Type a calculation such as `12*(3+4)`, `200 + 10%`, `15% of 80`, `sqrt(2)`, `round(pi, 3)` or `255 to hex`, and the answer is the top result as you type. Enter copies it.
@@ -26,6 +26,9 @@
 - The sidebar's All tools and Settings rows now match the tool rows: same icon size, column and text color in light and dark, the same hover, pressed and keyboard-focus look, and they show when their page is open.
 - Starting with Windows (`--background`) no longer opens the main window: building the tool list used to select and open the first tool, which showed the window.
 - A copy of Pocketknife started with its own data folder (as tests do) is now a separate instance, so it never hands its command line to the copy you're using.
+- UI tests use a plain Application on a shared hidden STA thread, avoiding app-startup crashes and side effects during tests.
+- The smoke test waits for the app to exit, so consecutive runs no longer race for the instance pipe or launcher shortcut.
+- The checksum file uses LF line endings, so verification works in Git Bash, WSL and Linux as well as PowerShell.
 
 ## 0.1.0 (2026-10-22)
 

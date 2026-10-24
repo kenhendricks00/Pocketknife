@@ -1,6 +1,6 @@
 ; Builds the Pocketknife installer. Run through scripts/package.ps1, which passes the defines below.
 #ifndef AppVersion
-  #define AppVersion "0.0.0"
+  #error "AppVersion must be supplied by scripts/package.ps1"
 #endif
 #ifndef SourceDir
   #define SourceDir "..\artifacts\publish"
